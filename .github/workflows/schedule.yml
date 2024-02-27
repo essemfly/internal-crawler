@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
+    environment: 
+      name: release
 
     steps:
     - uses: actions/checkout@v2
@@ -16,15 +18,7 @@ jobs:
       uses: actions/setup-go@v2
       with:
         go-version: '1.22' # Go 버전을 프로젝트에 맞게 조정하세요
-    - name: Use GitHub Release Environment
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        curl -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: Bearer $GITHUB_TOKEN" \
-          https://api.github.com/repos/essemfly/${{ github.repository }}/environments \
-          -d '{"name": "release", "auto_merge": false}'
+
     - name: Build
       run: go build -o wishket cmd/wishket/main.go
 
