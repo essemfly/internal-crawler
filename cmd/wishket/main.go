@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal"
@@ -11,8 +12,8 @@ import (
 
 func main() {
 	err := godotenv.Load() // 기본적으로 현재 디렉토리의 .env 파일을 로드합니다.
-	if err != nil {
-		fmt.Println("Error loading .env file")
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("Error loading .env file:", err)
 		return
 	}
 
