@@ -23,7 +23,7 @@ jobs:
         curl -X POST \
           -H "Accept: application/vnd.github.v3+json" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
-          https://api.github.com/repos/${{ github.repository }}/environments \
+          https://api.github.com/repos/essemfly/${{ github.repository }}/environments \
           -d '{"name": "release", "auto_merge": false}'
     - name: Build
       run: go build -o wishket cmd/wishket/main.go
