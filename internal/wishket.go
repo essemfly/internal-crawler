@@ -12,7 +12,7 @@ import (
 type ProjectInfo struct {
 	Title                 string
 	URL                   string
-	StatusMarks           []string
+	StatusMarks           string
 	EstimatedAmount       string
 	EstimatedDuration     string
 	WorkStartDate         string
@@ -59,8 +59,6 @@ func CrawlWishket() []*ProjectInfo {
 
 	f(doc)
 
-	log.Println("projects", projects)
-
 	return projects
 }
 
@@ -92,16 +90,6 @@ func extractProjectInfo(n *html.Node, project *ProjectInfo) {
 			for _, a := range n.Attr {
 				if a.Key == "class" {
 					switch a.Val {
-					case "project-status-label recruiting-status mb12":
-						for c := n.FirstChild; c != nil; c = c.NextSibling {
-							if c.Type == html.ElementNode && c.Data == "div" {
-								for _, cAttr := range c.Attr {
-									if cAttr.Key == "class" && strings.Contains(cAttr.Val, "status-mark") {
-										project.StatusMarks = append(project.StatusMarks, c.FirstChild.Data)
-									}
-								}
-							}
-						}
 					case "proposal-info":
 						extractProposalInfo(n, project)
 					case "project-core-info mb10":
@@ -205,6 +193,24 @@ func extractMinorInfo(n *html.Node, project *ProjectInfo) {
 					splitContent := strings.Split(textContent, " ")
 					if len(splitContent) > 1 {
 						project.WorkStartDate = splitContent[len(splitContent)-1]
+					}
+				}
+			}
+		} else if c.Type == html.ElementNode && c.Data == "div" {
+			for cInner := c.FirstChild; cInner != nil; cInner = cInner.NextSibling {
+				if cInner.Type == html.ElementNode && cInner.Data == "div" {
+					for _, cInnerAttr := range cInner.Attr {
+						if cInnerAttr.Key == "class" && strings.Contains(cInnerAttr.Val, "status-mark project-type-mark with-img") {
+							var textNode *html.Node
+							for cText := cInner.FirstChild; cText != nil; cText = cText.NextSibling {
+								if cText.Type == html.TextNode {
+									textNode = cText
+								}
+							}
+							if textNode != nil {
+								project.StatusMarks = textNode.Data
+							}
+						}
 					}
 				}
 			}
