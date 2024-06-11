@@ -1,4 +1,4 @@
-package internal
+package crawling
 
 import (
 	"io"
@@ -6,23 +6,11 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/essemfly/internal-crawler/internal/domain"
 	"golang.org/x/net/html"
 )
 
-type ProjectInfo struct {
-	Title                 string
-	URL                   string
-	StatusMarks           string
-	EstimatedAmount       string
-	EstimatedDuration     string
-	WorkStartDate         string
-	NumberOfApplicants    string
-	ProjectCategoryOrRole string
-	Location              string
-	Skills                []string
-}
-
-func CrawlWishket() []*ProjectInfo {
+func CrawlWishket() []*domain.ProjectInfo {
 	WISHKET_URL := "https://www.wishket.com/project/?d=M4JwLgvAdgpg7gMhgYwCYQCogK4yA%3D%3D%3D"
 	resp, err := http.Get(WISHKET_URL)
 	if err != nil {
@@ -40,13 +28,13 @@ func CrawlWishket() []*ProjectInfo {
 		log.Fatal("Error parsing HTML: ", err)
 	}
 
-	var projects []*ProjectInfo
+	var projects []*domain.ProjectInfo
 	var f func(*html.Node)
 	f = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "div" {
 			for _, a := range n.Attr {
 				if a.Key == "class" && a.Val == "project-info-box" {
-					project := ProjectInfo{}
+					project := domain.ProjectInfo{}
 					extractProjectInfo(n, &project)
 					projects = append(projects, &project)
 				}
@@ -62,7 +50,7 @@ func CrawlWishket() []*ProjectInfo {
 	return projects
 }
 
-func extractProjectInfo(n *html.Node, project *ProjectInfo) {
+func extractProjectInfo(n *html.Node, project *domain.ProjectInfo) {
 	if n.Type == html.ElementNode {
 		for _, a := range n.Attr {
 			if a.Key == "class" {
@@ -123,7 +111,7 @@ func extractProjectInfo(n *html.Node, project *ProjectInfo) {
 	}
 }
 
-func extractCoreInfo(n *html.Node, project *ProjectInfo) {
+func extractCoreInfo(n *html.Node, project *domain.ProjectInfo) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "p" {
 			for _, cAttr := range c.Attr {
@@ -140,7 +128,7 @@ func extractCoreInfo(n *html.Node, project *ProjectInfo) {
 	}
 }
 
-func extractProposalInfo(n *html.Node, project *ProjectInfo) {
+func extractProposalInfo(n *html.Node, project *domain.ProjectInfo) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "p" {
 			for _, cAttr := range c.Attr {
@@ -166,7 +154,7 @@ func extractProposalInfo(n *html.Node, project *ProjectInfo) {
 	}
 }
 
-func extractWorkStartDate(n *html.Node, project *ProjectInfo) {
+func extractWorkStartDate(n *html.Node, project *domain.ProjectInfo) {
 	if n.Type == html.ElementNode && n.Data == "p" {
 		for _, a := range n.Attr {
 			if a.Key == "class" && strings.Contains(a.Val, "start-recruitment-data") {
@@ -180,7 +168,7 @@ func extractWorkStartDate(n *html.Node, project *ProjectInfo) {
 	}
 }
 
-func extractMinorInfo(n *html.Node, project *ProjectInfo) {
+func extractMinorInfo(n *html.Node, project *domain.ProjectInfo) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if c.Type == html.ElementNode && c.Data == "p" {
 			for _, cAttr := range c.Attr {

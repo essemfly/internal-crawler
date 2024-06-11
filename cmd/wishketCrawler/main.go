@@ -6,7 +6,9 @@ import (
 	"os"
 
 	"github.com/essemfly/internal-crawler/config"
-	"github.com/essemfly/internal-crawler/internal"
+	"github.com/essemfly/internal-crawler/internal/crawling"
+	"github.com/essemfly/internal-crawler/internal/updating"
+	"github.com/essemfly/internal-crawler/pkg"
 	"github.com/joho/godotenv"
 )
 
@@ -17,14 +19,14 @@ func main() {
 		return
 	}
 
-	sheetsService, err := internal.CreateSheetsService(config.JsonKeyFilePath)
+	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
 	if err != nil {
 		log.Fatalf("Error creating Sheets service: %v", err)
 	}
 
-	lastestProjectURL := internal.GetLastProjectUrl(sheetsService)
+	lastestProjectURL := updating.GetLastProjectUrl(sheetsService)
 
-	projects := internal.CrawlWishket()
+	projects := crawling.CrawlWishket()
 
 	if len(projects) == 0 {
 		log.Println("No projects found.")
@@ -40,12 +42,11 @@ func main() {
 		if project.URL == lastestProjectURL {
 			break
 		}
-		log.Println("hoit", project)
-		err = internal.SendToSlack(project)
+		err = updating.SendWishketProjectToSlack(project)
 		if err != nil {
 			log.Fatalf("Error sending to Slack: %v", err)
 		}
 	}
 
-	internal.UpdateCheckpoint(projects[0].URL)
+	updating.UpdateCheckpoint(projects[0].URL)
 }

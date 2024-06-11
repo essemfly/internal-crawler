@@ -21,12 +21,24 @@ jobs:
 
     - name: Create .env file
       run: |
-        echo "WEBHOOK_URL=${{ secrets.WEBHOOK_URL }}" >> .env
+        echo "YOUTUBE_WEBHOOK_URL=${{ secrets.YOUTUBE_WEBHOOK_URL }}" >> .env
+        echo "WISHKET_WEBHOOK_URL=${{ secrets.WISHKET_WEBHOOK_URL }}" >> .env
         echo "SPREADSHEET_ID=${{ secrets.SPREADSHEET_ID }}" >> .env
         echo "SPREADSHEET_NAME=${{ secrets.SPREADSHEET_NAME }}" >> .env
+        echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" >> .env
+        echo "YOUTUBE_SPREADSHEET_ID=${{ secrets.YOUTUBE_SPREADSHEET_ID }}" >> .env
+        echo "NAVER_USERNAME=${{ secrets.NAVER_USERNAME }}" >> .env
+        echo "NAVER_PASSWORD=${{ secrets.NAVER_PASSWORD }}" >> .env
+
 
     - name: Build
-      run: go build -o wishket cmd/wishket/main.go
+      run: go build -o wishket cmd/wishketCrawler/main.go
 
     - name: Run
       run: ./wishket
+
+    - name: Build
+      run: go build -o crawler cmd/youtubeCrawler/main.go
+
+    - name: Run
+      run: ./crawler
