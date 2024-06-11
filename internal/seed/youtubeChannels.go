@@ -35,17 +35,17 @@ func Seed() []*domain.CrawlingSource {
 		Constraint:      &constraint2,
 	}
 
-	sheetName3 := "정육왕"
-	meatKing := domain.CrawlingSource{
-		Id:              3,
-		SourceName:      sheetName3,
-		Type:            domain.Youtube,
-		SourceID:        "UC1oXmhvYHVI2bApphh3IzuQ",
-		NaverListID:     "46ddcb5d43404213aa820b4138e5cdaf",
-		NaverListName:   "정육왕",
-		SpreadSheetID:   &spreadsheetID,
-		SpreadSheetName: &sheetName3,
-	}
+	// sheetName3 := "정육왕"
+	// meatKing := domain.CrawlingSource{
+	// 	Id:              3,
+	// 	SourceName:      sheetName3,
+	// 	Type:            domain.Youtube,
+	// 	SourceID:        "UC1oXmhvYHVI2bApphh3IzuQ",
+	// 	NaverListID:     "46ddcb5d43404213aa820b4138e5cdaf",
+	// 	NaverListName:   "정육왕",
+	// 	SpreadSheetID:   &spreadsheetID,
+	// 	SpreadSheetName: &sheetName3,
+	// }
 
-	return []*domain.CrawlingSource{&kimSawon, &bakMarket, &meatKing}
+	return []*domain.CrawlingSource{&kimSawon, &bakMarket}
 }
