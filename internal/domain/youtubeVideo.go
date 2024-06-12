@@ -48,13 +48,18 @@ func extractNaverURL(description string) string {
 func FilterWithChannelConstraints(videos []*YoutubeVideoStruct, channel *CrawlingSource) []*YoutubeVideoStruct {
 	var result []*YoutubeVideoStruct
 	for _, video := range videos {
-		if channel.Constraint == nil || containsConstraint(video, *channel.Constraint) {
+		if len(channel.Constraint) < 1 || containsConstraint(video, channel.Constraint) {
 			result = append(result, video)
 		}
 	}
 	return result
 }
 
-func containsConstraint(video *YoutubeVideoStruct, constraint string) bool {
-	return strings.Contains(video.Description, constraint) || strings.Contains(video.Title, constraint)
+func containsConstraint(video *YoutubeVideoStruct, constraints []string) bool {
+	for _, constraint := range constraints {
+		if strings.Contains(video.Description, constraint) && !strings.Contains(video.Title, constraint) {
+			return true
+		}
+	}
+	return false
 }

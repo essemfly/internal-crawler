@@ -1,30 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
+	"github.com/essemfly/internal-crawler/internal/domain"
+	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/essemfly/internal-crawler/internal/updating"
 	"github.com/essemfly/internal-crawler/pkg"
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load() // 기본적으로 현재 디렉토리의 .env 파일을 로드합니다.
-	if err != nil && !os.IsNotExist(err) {
-		fmt.Println("Error loading .env file:", err)
-		return
-	}
+	sources := seed.ListSources(domain.Wishket)
+	channel := sources[0]
 
 	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
 	if err != nil {
 		log.Fatalf("Error creating Sheets service: %v", err)
 	}
 
-	lastestProjectURL := updating.GetLastProjectUrl(sheetsService)
+	lastestProjectURL := updating.GetLastProjectUrl(sheetsService, channel)
 
 	projects := crawling.CrawlWishket()
 
@@ -42,7 +38,7 @@ func main() {
 		if project.URL == lastestProjectURL {
 			break
 		}
-		err = updating.SendWishketProjectToSlack(project)
+		err = updating.SendWishketProjectToSlack(channel, project)
 		if err != nil {
 			log.Fatalf("Error sending to Slack: %v", err)
 		}

@@ -14,30 +14,33 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
+// For YOUTUBE CRAWLER
 func SaveToSheetAtTop(service *sheets.Service, channel *domain.CrawlingSource, videos []*domain.YoutubeVideoStruct) error {
 	var newData [][]interface{}
 	for _, video := range videos {
 		row := structToSlice(video)
-		if channel.Constraint != nil {
-			if !strings.Contains(video.Description, *channel.Constraint) && !strings.Contains(video.Title, *channel.Constraint) {
-				continue
+		if len(channel.Constraint) > 0 {
+			for _, constraint := range channel.Constraint {
+				if !strings.Contains(video.Description, constraint) && !strings.Contains(video.Title, constraint) {
+					continue
+				}
 			}
 		}
 		newData = append(newData, row)
 	}
 
-	readRange := fmt.Sprintf("%s!A:J", *channel.SpreadSheetName)
-	resp, err := service.Spreadsheets.Values.Get(*channel.SpreadSheetID, readRange).Do()
+	readRange := fmt.Sprintf("%s!A:J", channel.SpreadSheetName)
+	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve data from sheet: %v", err)
 	}
 
 	mergedData := append(newData, resp.Values...)
-	updateRange := fmt.Sprintf("%s!A1", *channel.SpreadSheetName)
+	updateRange := fmt.Sprintf("%s!A1", channel.SpreadSheetName)
 	vr := sheets.ValueRange{
 		Values: mergedData,
 	}
-	_, err = service.Spreadsheets.Values.Update(*channel.SpreadSheetID, updateRange, &vr).ValueInputOption("RAW").Do()
+	_, err = service.Spreadsheets.Values.Update(channel.SpreadSheetID, updateRange, &vr).ValueInputOption("RAW").Do()
 	if err != nil {
 		return fmt.Errorf("unable to update sheet with new data: %v", err)
 	}
@@ -71,9 +74,10 @@ func GetCurrentTopVideo(service *sheets.Service, spreadsheetID, sheetName string
 	return existingLatestVideo, nil
 }
 
+// Depreciated: IsProcessed = TRUE / FALSE로 구분하여 사용하였으나, 더이상 사용하지 않음
 func ListUnProcessedVideos(service *sheets.Service, channel *domain.CrawlingSource) ([]*domain.YoutubeVideoStruct, error) {
-	readRange := fmt.Sprintf("%s!A:J", *channel.SpreadSheetName)
-	resp, err := service.Spreadsheets.Values.Get(*channel.SpreadSheetID, readRange).Do()
+	readRange := fmt.Sprintf("%s!A:J", channel.SpreadSheetName)
+	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve data from sheet: %v", err)
 	}
@@ -111,11 +115,12 @@ func structToSlice(video *domain.YoutubeVideoStruct) []interface{} {
 	}
 }
 
-func GetLastProjectUrl(service *sheets.Service) string {
+// FOR WISHKET
+func GetLastProjectUrl(service *sheets.Service, channel *domain.CrawlingSource) string {
 
 	// Define the spreadsheet ID and range
-	spreadsheetID := os.Getenv("SPREADSHEET_ID")
-	sheetName := os.Getenv("SPREADSHEET_NAME")
+	spreadsheetID := channel.SpreadSheetID
+	sheetName := channel.SpreadSheetName
 	readRange := sheetName + "!A:B"
 
 	log.Println("Reading from sheet...", readRange, spreadsheetID, sheetName)

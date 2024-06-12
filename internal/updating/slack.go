@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
 	"github.com/essemfly/internal-crawler/pkg"
 )
@@ -16,8 +15,7 @@ func SendVideosToSlack(channel *domain.CrawlingSource, videos []*domain.YoutubeV
 		payload := map[string]string{
 			"text": message,
 		}
-		webhookUrl := config.GetWebhookUrl("YOUTUBE")
-		err := pkg.SendToSlack(webhookUrl, payload)
+		err := pkg.SendToSlack(channel.WebhookURL, payload)
 		if err != nil {
 			return err
 		}
@@ -25,7 +23,7 @@ func SendVideosToSlack(channel *domain.CrawlingSource, videos []*domain.YoutubeV
 	return nil
 }
 
-func SendWishketProjectToSlack(project *domain.ProjectInfo) error {
+func SendWishketProjectToSlack(channel *domain.CrawlingSource, project *domain.ProjectInfo) error {
 	message := fmt.Sprintf("프로젝트: *%s*\n> URL: %s\n> 형태: %s\n> 예상 금액: %s\n> 예상 기간: %s\n> %s\n> 지원자 수: %s\n> 분야: %s\n> 위치: %s\n> 기술: %s",
 		project.Title, project.URL, project.StatusMarks, project.EstimatedAmount, project.EstimatedDuration,
 		project.WorkStartDate, project.NumberOfApplicants, project.ProjectCategoryOrRole,
@@ -35,8 +33,7 @@ func SendWishketProjectToSlack(project *domain.ProjectInfo) error {
 		"text": message,
 	}
 
-	webhookUrl := config.GetWebhookUrl("WISHKET")
-	err := pkg.SendToSlack(webhookUrl, payload)
+	err := pkg.SendToSlack(channel.WebhookURL, payload)
 	if err != nil {
 		return err
 	}

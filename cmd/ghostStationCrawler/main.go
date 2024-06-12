@@ -21,22 +21,20 @@ func main() {
 
 	channels := []domain.CrawlingSource{
 		{
-			Id:              3,
 			SourceName:      "MASONAR",
 			Type:            domain.Youtube,
 			SourceID:        "PLCli9_-EPRzXkSedQWHH_gZlTki-bslYO",
 			NaverListID:     "",
-			SpreadSheetID:   &spreadSheet,
-			SpreadSheetName: &sheetName1,
+			SpreadSheetID:   spreadSheet,
+			SpreadSheetName: sheetName1,
 		},
 		{
-			Id:              4,
 			SourceName:      "감탄쟁이",
 			Type:            domain.Youtube,
 			SourceID:        "PLkf5HhN3cnyFW0umotcYoWcjk0kCxVUWP",
 			NaverListID:     "",
-			SpreadSheetID:   &spreadSheet,
-			SpreadSheetName: &sheetName2,
+			SpreadSheetID:   spreadSheet,
+			SpreadSheetName: sheetName2,
 		},
 	}
 

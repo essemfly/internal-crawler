@@ -6,16 +6,19 @@ const (
 	Youtube   CrawlingSourceType = "Youtube"
 	NaverBlog CrawlingSourceType = "NaverBlog"
 	Instagram CrawlingSourceType = "Instagram"
+	DaumCafe  CrawlingSourceType = "DaumCafe"
+	Wishket   CrawlingSourceType = "Wishket"
+	Daangn    CrawlingSourceType = "Daangn"
 )
 
 type CrawlingSource struct {
-	Id              int
 	SourceName      string
-	Type            CrawlingSourceType
 	SourceID        string
+	SpreadSheetID   string
+	SpreadSheetName string
+	Type            CrawlingSourceType
 	NaverListID     string
 	NaverListName   string
-	SpreadSheetID   *string
-	SpreadSheetName *string
-	Constraint      *string
+	WebhookURL      string
+	Constraint      []string
 }
