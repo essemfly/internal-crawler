@@ -16,7 +16,7 @@ const (
 	ProductURL = "https://www.daangn.com/articles/"
 )
 
-func CrawlDanggnIndex(worker chan bool, done chan bool, keywords []*domain.DaangnKeyword, startIndex, lastIndex int) {
+func CrawlDanggnIndex(worker chan bool, done chan bool, keywords []string, startIndex, lastIndex int) {
 	// config.Logger.Info("start crawling danggn index", zap.Int("startIndex", startIndex), zap.Int("lastIndex", lastIndex))
 	log.Println("start crawling danggn index", zap.Int("startIndex", startIndex), zap.Int("lastIndex", lastIndex))
 	numMatchedProducts := 0
@@ -41,11 +41,6 @@ func CrawlDanggnIndex(worker chan bool, done chan bool, keywords []*domain.Daang
 			config.Repo.CrawlProducts.Insert(pd)
 			numMatchedProducts += 1
 		}
-	}
-
-	keywordsStr := make([]string, 0)
-	for _, keyword := range keywords {
-		keywordsStr = append(keywordsStr, keyword.Keyword)
 	}
 
 	<-worker
@@ -144,11 +139,11 @@ func CrawlPage(index int) (*domain.DaangnProduct, error) {
 	return &newProduct, nil
 }
 
-func addProductKeywords(product *domain.DaangnProduct, keywords []*domain.DaangnKeyword) []*domain.DaangnProduct {
+func addProductKeywords(product *domain.DaangnProduct, keywords []string) []*domain.DaangnProduct {
 	pds := []*domain.DaangnProduct{}
 	for _, keyword := range keywords {
-		if strings.Contains(product.Name, keyword.Keyword) {
-			product.Keyword = keyword.Keyword
+		if strings.Contains(product.Name, keyword) {
+			product.Keyword = keyword
 			pds = append(pds, product)
 		}
 	}
