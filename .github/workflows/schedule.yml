@@ -4,7 +4,7 @@ on:
   push:
     branches: [ push ]
   schedule:
-    - cron:  '0 1-11/2 * * *' # UTC 기준 0시부터 12시까지 매시 정각
+    - cron:  '0,30 0-16 * * *' # UTC 00:00, 00:30, ..., 16:00, 16:30
 
 jobs:
   build-and-run:
