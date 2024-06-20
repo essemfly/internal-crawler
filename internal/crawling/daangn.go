@@ -16,7 +16,7 @@ const (
 	ProductURL = "https://www.daangn.com/articles/"
 )
 
-func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIndex, lastIndex int) []*domain.DaangnProduct {
+func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIndex, lastIndex int) ([]*domain.DaangnProduct, error) {
 	log.Println("start crawling danggn index", zap.Int("startIndex", startIndex), zap.Int("lastIndex", lastIndex))
 	pds := []*domain.DaangnProduct{}
 	for i := startIndex; i <= lastIndex; i++ {
@@ -27,14 +27,14 @@ func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIn
 			}
 
 			// config.Logger.Error("failed to crawl page", zap.Error(err))
-			log.Fatalln("failed to crawl page", zap.Error(err))
-			continue
+			log.Println("failed to crawl page", zap.Error(err))
+			return nil, err
 		}
 
 		pds = addProductForKeywords(pds, newProduct, keywords)
 	}
 
-	return pds
+	return pds, nil
 }
 
 func CrawlPage(index int) (*domain.DaangnProduct, error) {

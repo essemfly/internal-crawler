@@ -22,7 +22,7 @@ import (
 const (
 	chunkSize        = 500
 	numWorkers       = 2
-	waitTime         = 3
+	waitTime         = 1
 	GlobalStartIndex = 783940000 // 2023-02-14 17:00:00
 	// 788540500 : 2024-06-20 10:00:00
 	// 783940000 : 2024-06-11 14:00:00
@@ -82,7 +82,10 @@ func main() {
 					localLastIndex = lastIndex
 				}
 
-				newPds := crawling.CrawlDanggnIndex(channel, keywords, localStartIndex, localLastIndex)
+				newPds, err := crawling.CrawlDanggnIndex(channel, keywords, localStartIndex, localLastIndex)
+				if err != nil {
+					log.Fatalln(err)
+				}
 
 				for _, pd := range newPds {
 					err := updating.SendDaangnProductToSlack(channel, pd)
