@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
@@ -21,6 +22,7 @@ import (
 const (
 	chunkSize        = 500
 	numWorkers       = 5
+	waitTime         = 3
 	GlobalStartIndex = 783940000 // 2023-02-14 17:00:00
 	// 788540500 : 2024-06-20 10:00:00
 	// 783940000 : 2024-06-11 14:00:00
@@ -53,6 +55,7 @@ func main() {
 	log.Println("Last Index! ", lastIndex)
 
 	for isIndexExists(lastIndex + chunkSize) {
+		time.Sleep(waitTime * time.Second)
 		startIndex := lastIndex + 1
 		lastIndex = startIndex + chunkSize - 1
 
@@ -100,6 +103,9 @@ func main() {
 		log.Println("All workers completed")
 		lastIndex = lastIndex + chunkSize
 		err = updating.UpdateLastIndex(sheetsService, channel, lastIndex)
+		if err != nil {
+			log.Fatalf("Error updating last index: %v", err)
+		}
 	}
 }
 
