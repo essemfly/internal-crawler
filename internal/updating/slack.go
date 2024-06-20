@@ -42,8 +42,9 @@ func SendWishketProjectToSlack(channel *domain.CrawlingSource, project *domain.P
 }
 
 func SendDaangnProductToSlack(channel *domain.CrawlingSource, product *domain.DaangnProduct) error {
-	message := fmt.Sprintf("물품: *%s*\n> 설명: %s\n> URL: %s\n> 가격: %s\n> 위치: %s\n> 카테고리: %s\n> %s\n> %s",
-		product.Name, product.Description, product.Url, strconv.Itoa(product.Price), product.SellerRegionName, product.CrawlCategory, product.WrittenAt, product.UpdatedAt)
+	formattedTime := product.WrittenAt.Format("2006-01-02 15:04")
+	message := fmt.Sprintf("물품: *%s*\n> URL: %s\n> 가격: %s\n> 위치: %s\n> 카테고리: %s\n> %s\n> %s",
+		product.Name, product.Url, strconv.Itoa(product.Price), product.SellerRegionName, product.CrawlCategory, formattedTime, product.Description)
 
 	payload := map[string]string{
 		"text": message,

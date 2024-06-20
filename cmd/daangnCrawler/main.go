@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"sync"
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
@@ -18,7 +19,7 @@ import (
 )
 
 const (
-	chunkSize        = 100
+	chunkSize        = 500
 	numWorkers       = 5
 	GlobalStartIndex = 783940000 // 2023-02-14 17:00:00
 	// 788540500 : 2024-06-20 10:00:00
@@ -50,83 +51,55 @@ func main() {
 	}
 
 	log.Println("Last Index! ", lastIndex)
-	if !isIndexExists(lastIndex + chunkSize) {
-		return
-	}
 
-	startIndex := lastIndex + 1
-	lastIndex = startIndex + chunkSize - 1
+	for isIndexExists(lastIndex + chunkSize) {
+		startIndex := lastIndex + 1
+		lastIndex = startIndex + chunkSize - 1
 
-	keywords, err := updating.ReadKeywords(sheetsService, channel)
-	if err != nil {
-		log.Fatalln("failed to find live keywords", zap.Error(err))
-		return
-	}
+		keywords, err := updating.ReadKeywords(sheetsService, channel)
+		if err != nil {
+			log.Fatalln("failed to find live keywords", zap.Error(err))
+			return
+		}
 
-	log.Println("Keywords!", keywords)
-	// workers <- true
-	// <-done
-	// go func() {
-	// 	newPds := crawling.CrawlDanggnIndex(channel, keywords, startIndex, lastIndex)
+		log.Println("Keywords!", keywords)
 
-	// 	for _, pd := range newPds {
-	// 		err := updating.SendDaangnProductToSlack(channel, pd)
-	// 		if err != nil {
-	// 			// config.Logger.Error("failed to send daangn product to slack", zap.Error(err))
-	// 			log.Println("failed to send daangn product to slack", zap.Error(err))
-	// 		}
-	// 		err = updating.SaveToSheetAtTopFromThirdRow(sheetsService, channel, newPds)
-	// 		if err != nil {
-	// 			// config.Logger.Error("failed to save to sheet", zap.Error(err))
-	// 			log.Println("failed to save to sheet", zap.Error(err))
-	// 		}
-	// 	}
-	// 	<-workers
-	// 	done <- true
-	// }()
+		var wg sync.WaitGroup
+		rangeSize := (lastIndex - startIndex + 1) / numWorkers
 
-	workers := make(chan bool, numWorkers)
-	done := make(chan bool, numWorkers)
+		for c := 0; c < numWorkers; c++ {
+			log.Println("worker", c, "start")
+			wg.Add(1)
+			go func(workerIndex int) {
+				defer wg.Done()
 
-	for c := 0; c < numWorkers; c++ {
-		done <- true
-	}
-
-	rangeSize := (lastIndex - startIndex + 1) / numWorkers
-
-	for c := 0; c < numWorkers; c++ {
-		workers <- true
-		go func(workerIndex int) {
-			defer func() {
-				<-workers
-				done <- true
-			}()
-
-			localStartIndex := startIndex + workerIndex*rangeSize
-			localLastIndex := localStartIndex + rangeSize - 1
-			if workerIndex == numWorkers-1 {
-				localLastIndex = lastIndex
-			}
-
-			newPds := crawling.CrawlDanggnIndex(channel, keywords, localStartIndex, localLastIndex)
-
-			for _, pd := range newPds {
-				err := updating.SendDaangnProductToSlack(channel, pd)
-				if err != nil {
-					log.Println("failed to send daangn product to slack", err)
-					continue
+				localStartIndex := startIndex + workerIndex*rangeSize
+				localLastIndex := localStartIndex + rangeSize - 1
+				if workerIndex == numWorkers-1 {
+					localLastIndex = lastIndex
 				}
-				err = updating.SaveToSheetAtTopFromThirdRow(sheetsService, channel, newPds)
-				if err != nil {
-					log.Println("failed to save to sheet", err)
-					continue
-				}
-			}
-		}(c)
-	}
 
-	for c := 0; c < numWorkers; c++ {
-		<-done
+				newPds := crawling.CrawlDanggnIndex(channel, keywords, localStartIndex, localLastIndex)
+
+				for _, pd := range newPds {
+					err := updating.SendDaangnProductToSlack(channel, pd)
+					if err != nil {
+						log.Println("failed to send daangn product to slack", err)
+						continue
+					}
+					err = updating.SaveToSheetAtTopFromThirdRow(sheetsService, channel, newPds)
+					if err != nil {
+						log.Println("failed to save to sheet", err)
+						continue
+					}
+				}
+			}(c)
+		}
+
+		wg.Wait()
+		log.Println("All workers completed")
+		lastIndex = lastIndex + chunkSize
+		err = updating.UpdateLastIndex(sheetsService, channel, lastIndex)
 	}
 }
 

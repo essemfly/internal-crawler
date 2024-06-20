@@ -2,7 +2,6 @@ package updating
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
@@ -11,7 +10,6 @@ import (
 )
 
 func ReadLastIndex(service *sheets.Service, channel *domain.CrawlingSource) (int, error) {
-	log.Println("SPreadSheetID: ", channel.SpreadSheetID)
 	readRange := fmt.Sprintf("%s!B1", channel.SpreadSheetName)
 	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
