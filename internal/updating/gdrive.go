@@ -178,7 +178,7 @@ func UpdateCheckpoint(projectURL string, channel *domain.CrawlingSource) {
 }
 
 // For DAANGN CRAWLER
-func SaveToSheetAtTopFromThirdRow(service *sheets.Service, channel *domain.CrawlingSource, products []*domain.DaangnProduct) error {
+func SaveToSheetAppend(service *sheets.Service, channel *domain.CrawlingSource, products []*domain.DaangnProduct) error {
 	var newData [][]interface{}
 	for _, product := range products {
 		row := []interface{}{
@@ -212,28 +212,20 @@ func SaveToSheetAtTopFromThirdRow(service *sheets.Service, channel *domain.Crawl
 		newData = append(newData, row)
 	}
 
-	// Read existing data from the sheet starting from the 3rd row
+	// Read existing data from the sheet to determine the last row
 	readRange := fmt.Sprintf("%s!A3:S", channel.SpreadSheetName)
 	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
 		return fmt.Errorf("unable to retrieve data from sheet: %v", err)
 	}
 
-	// Combine new data with existing data, new data goes first
-	mergedData := append(newData, resp.Values...)
+	// Determine the next row to insert new data
+	nextRow := len(resp.Values) + 3
 
-	// Clear existing data starting from the 3rd row
-	clearRange := fmt.Sprintf("%s!A3:S", channel.SpreadSheetName)
-	clearReq := &sheets.ClearValuesRequest{}
-	_, err = service.Spreadsheets.Values.Clear(channel.SpreadSheetID, clearRange, clearReq).Do()
-	if err != nil {
-		return fmt.Errorf("unable to clear sheet data: %v", err)
-	}
-
-	// Update the sheet starting from the 3rd row with merged data
-	updateRange := fmt.Sprintf("%s!A3", channel.SpreadSheetName)
+	// Update the sheet starting from the next available row with new data
+	updateRange := fmt.Sprintf("%s!A%d", channel.SpreadSheetName, nextRow)
 	vr := sheets.ValueRange{
-		Values: mergedData,
+		Values: newData,
 	}
 	_, err = service.Spreadsheets.Values.Update(channel.SpreadSheetID, updateRange, &vr).ValueInputOption("RAW").Do()
 	if err != nil {

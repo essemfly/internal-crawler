@@ -94,7 +94,7 @@ func main() {
 						log.Println("failed to send daangn product to slack", err)
 						continue
 					}
-					err = updating.SaveToSheetAtTopFromThirdRow(sheetsService, channel, newPds)
+					err = updating.SaveToSheetAppend(sheetsService, channel, newPds)
 					if err != nil {
 						log.Println("failed to save to sheet", err)
 						continue
