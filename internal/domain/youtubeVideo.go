@@ -57,7 +57,7 @@ func FilterWithChannelConstraints(videos []*YoutubeVideoStruct, channel *Crawlin
 
 func containsConstraint(video *YoutubeVideoStruct, constraints []string) bool {
 	for _, constraint := range constraints {
-		if strings.Contains(video.Description, constraint) && !strings.Contains(video.Title, constraint) {
+		if strings.Contains(video.Title, constraint) {
 			return true
 		}
 	}
