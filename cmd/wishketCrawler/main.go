@@ -53,5 +53,5 @@ func main() {
 		}
 	}
 
-	updating.UpdateCheckpoint(projects[0].URL)
+	updating.UpdateCheckpoint(projects[0].URL, channel)
 }

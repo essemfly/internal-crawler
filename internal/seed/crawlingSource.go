@@ -16,7 +16,7 @@ import (
 func getRegisteredSources() []*domain.CrawlingSource {
 	spreadsheetID := os.Getenv("SPREADSHEET_ID")
 	sheetName := "channels"
-	readRange := sheetName + "!A:H"
+	readRange := sheetName + "!A2:H"
 
 	ctx := context.Background()
 	creds := option.WithCredentialsFile(config.JsonKeyFilePath) // Replace with your credentials file path

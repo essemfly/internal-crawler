@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -50,6 +49,7 @@ func SaveToSheetAtTop(service *sheets.Service, channel *domain.CrawlingSource, v
 
 func GetCurrentTopVideo(service *sheets.Service, spreadsheetID, sheetName string) (*domain.YoutubeVideoStruct, error) {
 	readRange := fmt.Sprintf("%s!A1:J1", sheetName)
+	log.Println("Reading from sheet...", readRange, spreadsheetID, sheetName)
 	resp, err := service.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve data from sheet: %v", err)
@@ -145,7 +145,7 @@ func GetLastProjectUrl(service *sheets.Service, channel *domain.CrawlingSource) 
 	return projectURL
 }
 
-func UpdateCheckpoint(projectURL string) {
+func UpdateCheckpoint(projectURL string, channel *domain.CrawlingSource) {
 	ctx := context.Background()
 	creds := option.WithCredentialsFile(config.JsonKeyFilePath) // Replace with your credentials file path
 	service, err := sheets.NewService(ctx, creds)
@@ -158,8 +158,8 @@ func UpdateCheckpoint(projectURL string) {
 	newRow := []interface{}{datetime, projectURL}
 
 	// Define the spreadsheet ID and range
-	spreadsheetID := os.Getenv("SPREADSHEET_ID")
-	sheetName := os.Getenv("SPREADSHEET_NAME")
+	spreadsheetID := channel.SpreadSheetID
+	sheetName := channel.SpreadSheetName
 	writeRange := sheetName + "!A:B"
 
 	// Prepare the data for writing
