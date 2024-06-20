@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
@@ -9,10 +11,17 @@ import (
 	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/essemfly/internal-crawler/internal/updating"
 	"github.com/essemfly/internal-crawler/pkg"
+	"github.com/joho/godotenv"
 )
 
 // Used when crawls whole sheets of an youtube channel and add to list
 func main() {
+	err := godotenv.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("Error loading .env file:", err)
+		return
+	}
+
 	ctx, cancel := registering.OpenChrome()
 	registering.Login(ctx)
 

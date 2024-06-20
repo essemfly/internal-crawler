@@ -2,6 +2,7 @@ package updating
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/essemfly/internal-crawler/internal/domain"
@@ -28,6 +29,21 @@ func SendWishketProjectToSlack(channel *domain.CrawlingSource, project *domain.P
 		project.Title, project.URL, project.StatusMarks, project.EstimatedAmount, project.EstimatedDuration,
 		project.WorkStartDate, project.NumberOfApplicants, project.ProjectCategoryOrRole,
 		project.Location, strings.Join(project.Skills, ", "))
+
+	payload := map[string]string{
+		"text": message,
+	}
+
+	err := pkg.SendToSlack(channel.WebhookURL, payload)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func SendDaangnProductToSlack(channel *domain.CrawlingSource, product *domain.DaangnProduct) error {
+	message := fmt.Sprintf("물품: *%s*\n> 설명: %s\n> URL: %s\n> 가격: %s\n> 위치: %s\n> 카테고리: %s\n> %s\n> %s",
+		product.Name, product.Description, product.Url, strconv.Itoa(product.Price), product.SellerRegionName, product.CrawlCategory, product.WrittenAt, product.UpdatedAt)
 
 	payload := map[string]string{
 		"text": message,

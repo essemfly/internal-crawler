@@ -54,10 +54,18 @@ func getRegisteredSources() []*domain.CrawlingSource {
 				SpreadSheetID:   spreadsheetID,
 				SpreadSheetName: row[5].(string),
 				Type:            typeInStruct,
-				NaverListID:     row[6].(string),
-				NaverListName:   row[7].(string),
+				NaverListID:     "",
+				NaverListName:   "",
 				WebhookURL:      row[2].(string),
 				Constraint:      strings.Split(constraints, ","),
+			}
+
+			// Check if row[6] and row[7] exist and set them appropriately
+			if len(row) > 6 {
+				source.NaverListID = row[6].(string)
+			}
+			if len(row) > 7 {
+				source.NaverListName = row[7].(string)
 			}
 			sources = append(sources, source)
 		}

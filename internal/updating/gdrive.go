@@ -176,3 +176,69 @@ func UpdateCheckpoint(projectURL string) {
 	fmt.Println("New record added successfully.")
 
 }
+
+// For DAANGN CRAWLER
+func SaveToSheetAtTopFromThirdRow(service *sheets.Service, channel *domain.CrawlingSource, products []*domain.DaangnProduct) error {
+	var newData [][]interface{}
+	for _, product := range products {
+		row := []interface{}{
+			product.DanggnIndex,
+			product.Keyword,
+			product.KeywordGroup,
+			product.Name,
+			product.Description,
+			product.Price,
+			strings.Join(product.Images, ","),
+			product.Status,
+			product.Url,
+			product.ViewCounts,
+			product.LikeCounts,
+			product.ChatCounts,
+			product.CrawlCategory,
+			product.SellerNickName,
+			product.SellerRegionName,
+			product.SellerTemperature,
+			product.WrittenAt.Format(time.RFC3339),
+			product.CreatedAt.Format(time.RFC3339),
+			product.UpdatedAt.Format(time.RFC3339),
+		}
+		if len(channel.Constraint) > 0 {
+			for _, constraint := range channel.Constraint {
+				if !strings.Contains(product.Description, constraint) && !strings.Contains(product.Name, constraint) {
+					continue
+				}
+			}
+		}
+		newData = append(newData, row)
+	}
+
+	// Read existing data from the sheet starting from the 3rd row
+	readRange := fmt.Sprintf("%s!A3:S", channel.SpreadSheetName)
+	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
+	if err != nil {
+		return fmt.Errorf("unable to retrieve data from sheet: %v", err)
+	}
+
+	// Combine new data with existing data, new data goes first
+	mergedData := append(newData, resp.Values...)
+
+	// Clear existing data starting from the 3rd row
+	clearRange := fmt.Sprintf("%s!A3:S", channel.SpreadSheetName)
+	clearReq := &sheets.ClearValuesRequest{}
+	_, err = service.Spreadsheets.Values.Clear(channel.SpreadSheetID, clearRange, clearReq).Do()
+	if err != nil {
+		return fmt.Errorf("unable to clear sheet data: %v", err)
+	}
+
+	// Update the sheet starting from the 3rd row with merged data
+	updateRange := fmt.Sprintf("%s!A3", channel.SpreadSheetName)
+	vr := sheets.ValueRange{
+		Values: mergedData,
+	}
+	_, err = service.Spreadsheets.Values.Update(channel.SpreadSheetID, updateRange, &vr).ValueInputOption("RAW").Do()
+	if err != nil {
+		return fmt.Errorf("unable to update sheet with new data: %v", err)
+	}
+
+	return nil
+}

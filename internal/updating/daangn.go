@@ -2,6 +2,7 @@ package updating
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -10,7 +11,9 @@ import (
 )
 
 func ReadLastIndex(service *sheets.Service, channel *domain.CrawlingSource) (int, error) {
-	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, "B1").Do()
+	log.Println("SPreadSheetID: ", channel.SpreadSheetID)
+	readRange := fmt.Sprintf("%s!B1", channel.SpreadSheetName)
+	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
 		return 0, fmt.Errorf("unable to retrieve data from sheet: %v", err)
 	}
@@ -28,12 +31,12 @@ func ReadLastIndex(service *sheets.Service, channel *domain.CrawlingSource) (int
 }
 
 func UpdateLastIndex(service *sheets.Service, channel *domain.CrawlingSource, lastIndex int) error {
-	rangeToUpdate := "B1"
+	updateRange := fmt.Sprintf("%s!B1", channel.SpreadSheetName)
 	valueRange := &sheets.ValueRange{
 		Values: [][]interface{}{{lastIndex}},
 	}
 
-	_, err := service.Spreadsheets.Values.Update(channel.SpreadSheetID, rangeToUpdate, valueRange).ValueInputOption("RAW").Do()
+	_, err := service.Spreadsheets.Values.Update(channel.SpreadSheetID, updateRange, valueRange).ValueInputOption("RAW").Do()
 	if err != nil {
 		return fmt.Errorf("unable to update data in sheet: %v", err)
 	}
@@ -44,7 +47,8 @@ func UpdateLastIndex(service *sheets.Service, channel *domain.CrawlingSource, la
 func ReadKeywords(service *sheets.Service, channel *domain.CrawlingSource) ([]string, error) {
 	var strArr []string
 
-	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, "D1").Do()
+	readRange := fmt.Sprintf("%s!D1", channel.SpreadSheetName)
+	resp, err := service.Spreadsheets.Values.Get(channel.SpreadSheetID, readRange).Do()
 	if err != nil {
 		return strArr, fmt.Errorf("unable to retrieve data from sheet: %v", err)
 	}

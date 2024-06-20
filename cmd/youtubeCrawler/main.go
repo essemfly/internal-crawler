@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -11,11 +12,18 @@ import (
 	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/essemfly/internal-crawler/internal/updating"
 	"github.com/essemfly/internal-crawler/pkg"
+	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
 func main() {
+	err := godotenv.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("Error loading .env file:", err)
+		return
+	}
+
 	sources := seed.ListSources(domain.Youtube)
 
 	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
