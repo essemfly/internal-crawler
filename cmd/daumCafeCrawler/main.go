@@ -1,128 +1,148 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"net/http/cookiejar"
-	"net/url"
-	"strings"
+	"log"
+	"time"
 
-	"golang.org/x/net/html"
+	"github.com/chromedp/cdproto/cdp"
+	"github.com/chromedp/chromedp"
+	"github.com/essemfly/internal-crawler/internal/registering"
 )
 
+const (
+	CAFE     = "dongarry"
+	BOARD    = "Dilr"
+	PAGE_NUM = 1
+)
+
+type Article struct {
+	URL          string
+	TxtDetail    string
+	Username     string
+	CreatedAt    string
+	ViewCount    string
+	CommentCount string
+}
+
 func main() {
-	// Daum 로그인 정보
-	daumID := "lsm89712@hanmail.net"
-	daumPassword := ""
+	ctx, cancel := registering.OpenChrome()
+	defer cancel()
+	log.Println("1")
 
-	// Daum 로그인 URL
-	loginURL := "https://accounts.kakao.com/login/?continue=https://cafe.daum.net/_c21_/bbs_list?grpid=IGaj&fldid=Dilr"
+	ctx, cancel = context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
 
-	// 로그인 폼 데이터
-	loginData := url.Values{
-		"id":  {daumID},
-		"pw":  {daumPassword},
-		"url": {"https://www.daum.net/"},
+	// log.Println("11")
+	// if err := login(ctx); err != nil {
+	// 	log.Fatalf("Failed to login: %v", err)
+	// }
+
+	if err := scrapeArticles(ctx); err != nil {
+		log.Fatalf("Failed to scrape articles: %v", err)
 	}
-
-	// HTTP 클라이언트 및 쿠키 저장소 생성
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		fmt.Println("Error creating cookie jar:", err)
-		return
-	}
-	client := &http.Client{Jar: jar}
-
-	// 로그인 요청 보내기
-	resp, err := client.PostForm(loginURL, loginData)
-	if err != nil {
-		fmt.Println("Error logging in:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	// 응답 본문 확인 (디버깅용)
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading login response:", err)
-		return
-	}
-	fmt.Println("Login response:", string(body))
-
-	url := "https://cafe.daum.net/_c21_/bbs_list?grpid=IGaj&fldid=Dilr"
-
-	// HTTP GET 요청 보내기
-	resp, err = http.Get(url)
-	if err != nil {
-		fmt.Println("Error fetching the URL:", err)
-		return
-	}
-	defer resp.Body.Close()
-
-	// HTML 파싱
-	doc, err := html.Parse(resp.Body)
-	if err != nil {
-		fmt.Println("Error parsing the HTML:", err)
-		return
-	}
-
-	// 게시글 제목과 링크 추출
-	extractPosts(doc)
 }
 
-func extractPosts(n *html.Node) {
-	if n.Type == html.ElementNode && n.Data == "tr" {
-		hasStateInfo := false
-		for _, attr := range n.Attr {
-			if attr.Key == "class" && strings.Contains(attr.Val, "state_info") {
-				hasStateInfo = true
-				break
-			}
+// func login(ctx context.Context) error {
+// 	var loginURL = fmt.Sprintf("https://m.cafe.daum.net/%s", CAFE)
+
+// 	err := chromedp.Run(ctx,
+// 		chromedp.Navigate(loginURL),
+// 		chromedp.Click(`#daumMinidaum > a`),
+// 		chromedp.WaitVisible(`#loginId--1`),
+// 		chromedp.SendKeys(`#loginId--1`, USERNAME),
+// 		chromedp.SendKeys(`#password--2`, PASSWORD),
+// 		chromedp.Click(`#mainContent > div > div > form > div.confirm_btn > button.btn_g.highlight.submit`),
+// 		chromedp.Sleep(15*time.Second),
+// 	)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+func scrapeArticles(ctx context.Context) error {
+	err := navigateToBoard(ctx)
+	if err != nil {
+		return err
+	}
+	for i := 1; i <= PAGE_NUM; i++ {
+		log.Printf("Navigating to board page (page %d)...", i)
+		_, err = extractArticles(ctx)
+		if err != nil {
+			return err
+		}
+		if i+1 > PAGE_NUM {
+			break
+		}
+		goToNextPage(ctx, i+1)
+	}
+
+	return nil
+}
+
+func navigateToBoard(ctx context.Context) error {
+	boardURL := fmt.Sprintf("https://m.cafe.daum.net/%s/%s", CAFE, BOARD)
+
+	return chromedp.Run(ctx,
+		chromedp.Navigate(boardURL),
+		chromedp.Sleep(time.Second*2),
+	)
+}
+
+func goToNextPage(ctx context.Context, currentPage int) error {
+	nextPageSelector := fmt.Sprintf("#pagingNav > span:nth-child(%d)", currentPage%5+2)
+	if currentPage%5 == 0 {
+		nextPageSelector = "#mArticle > div.paging_board > a.btn_page.btn_next"
+	}
+
+	return chromedp.Run(ctx,
+		chromedp.Click(nextPageSelector),
+		chromedp.Sleep(2*time.Second),
+	)
+}
+
+func extractArticles(ctx context.Context) ([]Article, error) {
+	var items []*cdp.Node
+
+	err := chromedp.Run(ctx,
+		chromedp.WaitReady(`#slideArticleList li`),
+		chromedp.Nodes(`#slideArticleList li`, &items),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	var articles []Article
+
+	for _, item := range items {
+		var txtDetail, username, createdAt, viewCount, commentCount, articleURL string
+
+		err := chromedp.Run(ctx,
+			chromedp.Text(`.txt_detail`, &txtDetail, chromedp.ByQuery, chromedp.FromNode(item)),
+			chromedp.Text(`.username`, &username, chromedp.ByQuery, chromedp.FromNode(item)),
+			chromedp.Text(`.created_at`, &createdAt, chromedp.ByQuery, chromedp.FromNode(item)),
+			chromedp.Text(`.view_count`, &viewCount, chromedp.ByQuery, chromedp.FromNode(item)),
+			chromedp.Text(`.num_cmt`, &commentCount, chromedp.ByQuery, chromedp.FromNode(item)),
+			chromedp.AttributeValue(`a.link_cafe`, "href", &articleURL, nil, chromedp.ByQuery, chromedp.FromNode(item)),
+		)
+		if err != nil {
+			return nil, err
 		}
 
-		if !hasStateInfo {
-			extractATagText(n)
-		}
+		// Append the extracted details to the articles list
+		articles = append(articles, Article{
+			TxtDetail:    txtDetail,
+			Username:     username,
+			CreatedAt:    createdAt,
+			ViewCount:    viewCount,
+			CommentCount: commentCount,
+			URL:          articleURL,
+		})
 	}
 
-	// 자식 노드 순회
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		extractPosts(c)
-	}
-}
-
-func extractATagText(n *html.Node) {
-	if n.Type == html.ElementNode && n.Data == "a" {
-		title := extractText(n)
-		link := "https://cafe.daum.net" + getHref(n)
-		fmt.Println("Title:", title)
-		fmt.Println("Link:", link)
-		fmt.Println()
-	}
-
-	// 자식 노드 순회
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		extractATagText(c)
-	}
-}
-
-func extractText(n *html.Node) string {
-	if n.Type == html.TextNode {
-		return n.Data
-	}
-	var text string
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		text += extractText(c)
-	}
-	return strings.TrimSpace(text)
-}
-
-func getHref(n *html.Node) string {
-	for _, attr := range n.Attr {
-		if attr.Key == "href" {
-			return attr.Val
-		}
-	}
-	return ""
+	log.Println("Articles:", articles)
+	return articles, nil
 }
