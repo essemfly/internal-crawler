@@ -59,7 +59,7 @@ func SendDaangnProductToSlack(channel *domain.CrawlingSource, product *domain.Da
 
 func SendGuestArticleToSlack(channel *domain.CrawlingSource, article *domain.GuestArticle) error {
 	message := fmt.Sprintf("게스트 게시글: *%s*\n> URL: %s\n> 작성일: %s",
-		article.TxtDetail, "https://cafe.daum.net/dongarry"+article.URL, article.CreatedAt)
+		article.TxtDetail, "https://cafe.daum.net"+article.URL, article.CreatedAt)
 
 	payload := map[string]string{
 		"text": message,
