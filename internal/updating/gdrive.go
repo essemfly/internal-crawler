@@ -276,6 +276,8 @@ func UpdateGuestArticleCheckpoint(service *sheets.Service, channel *domain.Crawl
 	sheetName := channel.SpreadSheetName
 	writeRange := sheetName + "!A:F"
 
+	baseURL := "https://cafe.daum.net/dongarry"
+
 	newData := [][]interface{}{}
 	for _, article := range articles {
 		writtenAt := pkg.ParseRelativeTime(article.CreatedAt)
@@ -285,7 +287,7 @@ func UpdateGuestArticleCheckpoint(service *sheets.Service, channel *domain.Crawl
 			writtenAt,
 			article.ViewCount,
 			article.CommentCount,
-			article.URL,
+			baseURL + article.URL,
 		}
 		newData = append(newData, row)
 	}
