@@ -37,6 +37,12 @@ jobs:
       run: ./crawler
 
     - name: Build
+      run:  go build -o guest cmd/daumCafeCrawler/main.go
+
+    - name: Run
+      run: ./guest
+
+    - name: Build
       run: go build -o daangn cmd/daangnCrawler/main.go
 
     - name: Run

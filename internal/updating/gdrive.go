@@ -9,6 +9,7 @@ import (
 
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
+	"github.com/essemfly/internal-crawler/pkg"
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
@@ -233,4 +234,70 @@ func SaveToSheetAppend(service *sheets.Service, channel *domain.CrawlingSource, 
 	}
 
 	return nil
+}
+
+// For DAUM CAFE CRAWLER
+func GetLastGuestArticle(service *sheets.Service, channel *domain.CrawlingSource) (*domain.GuestArticle, error) {
+	// Define the spreadsheet ID and range
+	spreadsheetID := channel.SpreadSheetID
+	sheetName := channel.SpreadSheetName
+	readRange := sheetName + "!F:K"
+
+	log.Println("Reading from sheet...", readRange, spreadsheetID, sheetName)
+
+	// Make the API request to get the data
+	resp, err := service.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve data from sheet: %v", err)
+	}
+
+	// Process the response and print the data
+	if len(resp.Values) == 0 {
+		fmt.Println("No data found.")
+		return nil, nil
+	}
+
+	// Get the last record of columns A and B
+	lastRecord := resp.Values[len(resp.Values)-1]
+	article := &domain.GuestArticle{
+		TxtDetail:    lastRecord[0].(string),
+		Username:     lastRecord[1].(string),
+		CreatedAt:    lastRecord[2].(string),
+		ViewCount:    lastRecord[3].(string),
+		CommentCount: lastRecord[4].(string),
+		URL:          lastRecord[5].(string),
+	}
+
+	return article, nil
+}
+
+func UpdateGuestArticleCheckpoint(service *sheets.Service, channel *domain.CrawlingSource, articles []*domain.GuestArticle) {
+	spreadsheetID := channel.SpreadSheetID
+	sheetName := channel.SpreadSheetName
+	writeRange := sheetName + "!A:F"
+
+	newData := [][]interface{}{}
+	for _, article := range articles {
+		writtenAt := pkg.ParseRelativeTime(article.CreatedAt)
+		row := []interface{}{
+			article.TxtDetail,
+			article.Username,
+			writtenAt,
+			article.ViewCount,
+			article.CommentCount,
+			article.URL,
+		}
+		newData = append(newData, row)
+	}
+
+	// Prepare the data for writing
+	valueRange := &sheets.ValueRange{
+		Values: newData,
+	}
+
+	// Make the API request to update the data
+	_, err := service.Spreadsheets.Values.Append(spreadsheetID, writeRange, valueRange).ValueInputOption("RAW").Do()
+	if err != nil {
+		log.Fatalf("Unable to update data in sheet: %v", err)
+	}
 }

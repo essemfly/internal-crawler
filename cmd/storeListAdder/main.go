@@ -22,8 +22,8 @@ func main() {
 		return
 	}
 
-	ctx, cancel := registering.OpenChrome()
-	registering.Login(ctx)
+	ctx, cancel := pkg.OpenChrome()
+	registering.NaverLogin(ctx)
 
 	sources := seed.ListSources(domain.Youtube)
 	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)

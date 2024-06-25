@@ -56,3 +56,18 @@ func SendDaangnProductToSlack(channel *domain.CrawlingSource, product *domain.Da
 	}
 	return nil
 }
+
+func SendGuestArticleToSlack(channel *domain.CrawlingSource, article *domain.GuestArticle) error {
+	message := fmt.Sprintf("게스트 게시글: *%s*\n> URL: %s\n> 작성일: %s",
+		article.TxtDetail, article.URL, article.CreatedAt)
+
+	payload := map[string]string{
+		"text": message,
+	}
+
+	err := pkg.SendToSlack(channel.WebhookURL, payload)
+	if err != nil {
+		return err
+	}
+	return nil
+}

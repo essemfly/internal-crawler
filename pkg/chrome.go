@@ -1,4 +1,4 @@
-package registering
+package pkg
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 func OpenChrome() (context.Context, context.CancelFunc) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
+		chromedp.Flag("headless", true),
 	)
 
 	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(context.Background(), opts...)

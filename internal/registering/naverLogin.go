@@ -13,7 +13,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-func Login(ctx context.Context) {
+func NaverLogin(ctx context.Context) {
 	err := chromedp.Run(ctx, chromedp.Navigate(`https://nid.naver.com/nidlogin.login`), chromedp.WaitVisible(`body`, chromedp.ByQuery))
 	if err != nil {
 		log.Fatal(err)
