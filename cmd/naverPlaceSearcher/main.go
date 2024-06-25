@@ -1,97 +1,26 @@
 package main
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/chromedp/chromedp"
+	"github.com/essemfly/internal-crawler/config"
+	"github.com/essemfly/internal-crawler/internal/domain"
+	"github.com/essemfly/internal-crawler/internal/seed"
+	"github.com/essemfly/internal-crawler/pkg"
 	"github.com/joho/godotenv"
-	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"google.golang.org/api/sheets/v4"
 )
 
-type NaverSearchResponse struct {
-	Items []struct {
-		Title       string `json:"title"`
-		Link        string `json:"link"`
-		RoadAddress string `json:"roadAddress"`
-		Address     string `json:"address"`
-		MapX        string `json:"mapx"`
-		MapY        string `json:"mapy"`
-	} `json:"items"`
-}
-
-type PlaceInfo struct {
+type Place struct {
 	Name    string
 	Address string
 	URL     string
-}
-
-func getPlaceUrl(placeName, address string) (*PlaceInfo, error) {
-	apiURL := "https://openapi.naver.com/v1/search/local.json"
-	query := url.QueryEscape(placeName)
-	requestURL := fmt.Sprintf("%s?query=%s&display=5&start=1&sort=random", apiURL, query)
-
-	req, err := http.NewRequest("GET", requestURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("X-Naver-Client-Id", os.Getenv("NAVER_CLIENT_ID"))
-	req.Header.Add("X-Naver-Client-Secret", os.Getenv("NAVER_CLIENT_SECRET"))
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error: status code %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var searchResponse NaverSearchResponse
-	err = json.Unmarshal(body, &searchResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	var bestMatch *PlaceInfo
-	var lowestDistance int
-
-	for _, item := range searchResponse.Items {
-		// HTML 태그 제거
-		itemTitle := strings.ReplaceAll(item.Title, "<b>", "")
-		itemTitle = strings.ReplaceAll(itemTitle, "</b>", "")
-
-		dist := levenshtein.DistanceForStrings([]rune(address), []rune(item.RoadAddress), levenshtein.DefaultOptions)
-
-		placeURL := fmt.Sprintf("https://map.naver.com/v5/search/%s,%s,%s", url.QueryEscape(itemTitle), item.MapX, item.MapY)
-
-		log.Println("item", item.Title, item.Link)
-		if bestMatch == nil || dist < lowestDistance {
-			bestMatch = &PlaceInfo{
-				Name:    itemTitle,
-				Address: item.RoadAddress,
-				URL:     placeURL,
-			}
-			lowestDistance = dist
-		}
-	}
-
-	log.Println("best match", bestMatch)
-
-	return bestMatch, nil
 }
 
 func main() {
@@ -101,25 +30,79 @@ func main() {
 		return
 	}
 
-	places := []struct {
-		Name    string
-		Address string
-	}{
-		{Name: "풍성감자탕", Address: "서울 광진구 자양로18길 5 (구의동 252-43)"},
-		{Name: "효제루", Address: "서울 종로구 대학로 18 1층 (효제동 301-2)"},
-	}
-
-	for _, place := range places {
-		placeInfo, err := getPlaceUrl(place.Name, place.Address)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+	sources := seed.ListSources(domain.Youtube)
+	for _, channel := range sources {
+		if channel.SourceName != "먹을텐데" {
 			continue
 		}
-		log.Println("placeInfo", placeInfo)
-		if placeInfo != nil {
-			fmt.Printf("[%s] %s - %s\n", placeInfo.Name, placeInfo.Address, placeInfo.URL)
-		} else {
-			fmt.Printf("No matching place found for %s\n", place.Name)
+
+		sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
+		if err != nil {
+			log.Fatalf("Error creating Sheets service: %v", err)
+		}
+
+		readRange := fmt.Sprintf("%s!F:F", channel.SpreadSheetName)
+		places, err := readPlacesFromSheet(sheetsService, channel.SpreadSheetID, readRange)
+		if err != nil {
+			log.Fatalf("Error reading from sheet: %v", err)
+		}
+
+		log.Println("Found places:", places[30])
+
+		ctx, cancel := pkg.OpenChrome()
+		defer cancel()
+
+		for i, place := range places {
+			err := searchPlace(ctx, &places[i])
+			if err != nil {
+				fmt.Printf("Error processing %s at %s: %v\n", place.Name, place.Address, err)
+				places[i].URL = ""
+			}
+			time.Sleep(1 * time.Second) // 페이지 로딩 대기 및 IP 차단 방지
+		}
+
+	}
+
+}
+
+func readPlacesFromSheet(srv *sheets.Service, spreadsheetId, readRange string) ([]Place, error) {
+	resp, err := srv.Spreadsheets.Values.Get(spreadsheetId, readRange).Do()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve data from sheet: %w", err)
+	}
+
+	var places []Place
+	for _, row := range resp.Values {
+		if len(row) > 0 {
+			// F열의 각 셀 안에서 상호명과 주소를 줄바꿈으로 분리
+			lines := strings.Split(fmt.Sprintf("%v", row[0]), "\n")
+			if len(lines) >= 2 {
+				place := Place{
+					Name:    strings.TrimSpace(lines[0]),
+					Address: strings.TrimSpace(lines[1]),
+				}
+				places = append(places, place)
+			}
 		}
 	}
+
+	return places, nil
+}
+
+func searchPlace(ctx context.Context, place *Place) error {
+	var naverPlaceURL string
+	place.Name = strings.Trim(place.Name, "[]")
+
+	// 첫번쨰 클릭 -> 공유버튼 클릭 -> spi_copyurl가져오기
+	err := chromedp.Run(ctx,
+		chromedp.Navigate(`https://map.naver.com/p/search/`+place.Name),
+		chromedp.Sleep(10*time.Second),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	place.URL = naverPlaceURL
+	return nil
 }
