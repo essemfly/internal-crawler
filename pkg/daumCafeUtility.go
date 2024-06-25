@@ -13,10 +13,14 @@ func ParseRelativeTime(relativeTime string) string {
 		log.Fatalf("Failed to load location: %v", err)
 	}
 	now := time.Now().In(location)
+
+	if relativeTime == "방금전" {
+		return now.Format("2006-01-02 15:04:05")
+	}
+
 	regex := regexp.MustCompile(`(\d+)(시간|분)`)
 	matches := regex.FindAllStringSubmatch(relativeTime, -1)
 
-	log.Println("RL", relativeTime)
 	if len(matches) == 0 {
 		log.Fatalf("Invalid time format: %v", relativeTime)
 	}
@@ -36,6 +40,5 @@ func ParseRelativeTime(relativeTime string) string {
 		}
 	}
 
-	log.Println("now", now)
 	return now.Format("2006-01-02 15:04:05")
 }

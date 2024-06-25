@@ -16,6 +16,7 @@ import (
 
 const (
 	PAGE_NUM = 1
+	BASEURL  = "https://cafe.daum.net/dongarry"
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 
 		newArticles := []*domain.GuestArticle{}
 		for _, a := range articles {
-			if lastGuestArticle != nil && a.URL == lastGuestArticle.URL {
+			if lastGuestArticle != nil && BASEURL+a.URL == lastGuestArticle.URL {
 				break
 			}
 			newArticles = append([]*domain.GuestArticle{a}, newArticles...)
