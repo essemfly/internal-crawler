@@ -84,7 +84,7 @@ func main() {
 
 				newPds, err := crawling.CrawlDanggnIndex(channel, keywords, localStartIndex, localLastIndex)
 				if err != nil {
-					log.Println("error in CrawlDanggnIndex:", err)
+					log.Fatalf("Forbidden error encountered in CrawlDanggnIndex: %v", err)
 					return
 				}
 
