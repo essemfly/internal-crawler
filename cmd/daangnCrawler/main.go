@@ -54,7 +54,11 @@ func main() {
 
 	log.Println("Last Index! ", lastIndex)
 
-	for isIndexExists(lastIndex + chunkSize) {
+	for {
+		if isIndexExists(lastIndex + chunkSize) {
+			break
+		}
+
 		time.Sleep(waitTime * time.Second)
 		startIndex := lastIndex + 1
 		lastIndex = startIndex + chunkSize - 1
