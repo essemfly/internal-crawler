@@ -21,8 +21,10 @@ import (
 
 const (
 	chunkSize        = 500
-	numWorkers       = 5
-	waitTime         = 1
+	numWorkers       = 4
+	waitTime         = 2
+	numRetries       = 8
+	randomRange      = 30
 	GlobalStartIndex = 783940000 // 2023-02-14 17:00:00
 	// 788540500 : 2024-06-20 10:00:00
 	// 783940000 : 2024-06-11 14:00:00
@@ -123,11 +125,11 @@ func isIndexExists(index int) bool {
 
 	for err != nil {
 		errCounts += 1
-		if errCounts > 5 {
+		if errCounts > numRetries {
 			return false
 		}
 
-		n := rand.Intn(11)
+		n := rand.Intn(randomRange)
 		_, err = crawling.CrawlPage(index + n)
 	}
 
