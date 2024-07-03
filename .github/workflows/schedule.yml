@@ -4,7 +4,7 @@ on:
   push:
     branches: [ push ]
   schedule:
-    - cron:  '0,30 0-16 * * *' # UTC 00:00, 00:30, ..., 16:00, 16:30
+    - cron:  '0,30 0-16,22-23 * * *' # UTC 00:00, 00:30, ..., 16:00, 16:30
 
 jobs:
   build-and-run:
@@ -42,8 +42,8 @@ jobs:
     - name: Run
       run: ./guest
 
-    - name: Build
-      run: go build -o daangn cmd/daangnCrawler/main.go
+    # - name: Build
+    #   run: go build -o daangn cmd/daangnCrawler/main.go
 
-    - name: Run
-      run: ./daangn
+    # - name: Run
+    #   run: ./daangn
