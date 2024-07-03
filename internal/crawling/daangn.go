@@ -14,6 +14,7 @@ import (
 
 const (
 	ProductURL = "https://www.daangn.com/articles/"
+	waitTime   = 1
 )
 
 func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIndex, lastIndex int) ([]*domain.DaangnProduct, error) {
@@ -25,13 +26,12 @@ func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIn
 			if err.Error() == "Not Found" {
 				continue
 			}
-
-			// config.Logger.Error("failed to crawl page", zap.Error(err))
 			log.Println("failed to crawl page", zap.Error(err))
 			return nil, err
 		}
 
 		pds = addProductForKeywords(pds, newProduct, keywords)
+		time.Sleep(waitTime * time.Second)
 	}
 
 	return pds, nil

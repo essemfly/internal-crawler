@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	chunkSize        = 500
+	chunkSize        = 400
 	numWorkers       = 4
 	waitTime         = 2
 	numRetries       = 8
