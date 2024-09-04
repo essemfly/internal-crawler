@@ -44,6 +44,8 @@ func getRegisteredSources() []*domain.CrawlingSource {
 				typeInStruct = domain.Daangn
 			case "daumcafe":
 				typeInStruct = domain.DaumCafe
+			case "naverblog":
+				typeInStruct = domain.NaverBlog
 			}
 
 			constraints := row[4].(string)

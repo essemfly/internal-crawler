@@ -303,3 +303,37 @@ func UpdateGuestArticleCheckpoint(service *sheets.Service, channel *domain.Crawl
 		log.Fatalf("Unable to update data in sheet: %v", err)
 	}
 }
+
+// For NAVER BLOG CRAWLER
+func SaveToSheetAppendNaverBlog(service *sheets.Service, channel *domain.CrawlingSource, posts []*domain.NaverBlogArticle) error {
+	spreadsheetID := channel.SpreadSheetID
+	sheetName := channel.SpreadSheetName
+	writeRange := sheetName + "!A:F"
+
+	newData := [][]interface{}{}
+	for _, article := range posts {
+		row := []interface{}{
+			article.ArticleID,
+			article.ArticleLink,
+			false,
+			article.Title,
+			strings.Join(article.NaverPlaces, ","),
+			article.Content,
+			article.PostDate,
+		}
+		newData = append(newData, row)
+	}
+
+	// Prepare the data for writing
+	valueRange := &sheets.ValueRange{
+		Values: newData,
+	}
+
+	// Make the API request to update the data
+	_, err := service.Spreadsheets.Values.Append(spreadsheetID, writeRange, valueRange).ValueInputOption("RAW").Do()
+	if err != nil {
+		log.Fatalf("Unable to update data in sheet: %v", err)
+	}
+
+	return nil
+}
