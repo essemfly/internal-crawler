@@ -49,3 +49,15 @@ type DaangnConfig struct {
 	ID         uint `gorm:"primaryKey"` // Primary key
 	CurrentIdx int  `json:"current_idx"`
 }
+
+func (DaangnProduct) TableName() string {
+	return "daangn_products"
+}
+
+func (DaangnKeyword) TableName() string {
+	return "daangn_keywords"
+}
+
+func (DaangnConfig) TableName() string {
+	return "daangn_configs"
+}

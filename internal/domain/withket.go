@@ -15,5 +15,5 @@ type ProjectInfo struct {
 }
 
 func (ProjectInfo) TableName() string {
-	return "wishket"
+	return "wishket_projects"
 }

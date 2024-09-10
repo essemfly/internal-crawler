@@ -11,5 +11,5 @@ type GuestArticle struct {
 }
 
 func (GuestArticle) TableName() string {
-	return "daum_cafe"
+	return "daum_cafe_articles"
 }

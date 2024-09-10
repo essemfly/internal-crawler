@@ -21,7 +21,7 @@ type YoutubeVideoStruct struct {
 }
 
 func (YoutubeVideoStruct) TableName() string {
-	return "youtube"
+	return "youtubes"
 }
 
 func ConvertToYoutubeVideoStruct(videos []*youtube.PlaylistItem) []*YoutubeVideoStruct {
