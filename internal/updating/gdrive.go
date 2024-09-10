@@ -263,8 +263,8 @@ func GetLastGuestArticle(service *sheets.Service, channel *domain.CrawlingSource
 		TxtDetail:    lastRecord[0].(string),
 		Username:     lastRecord[1].(string),
 		CreatedAt:    lastRecord[2].(string),
-		ViewCount:    lastRecord[3].(string),
-		CommentCount: lastRecord[4].(string),
+		ViewCount:    lastRecord[3].(int),
+		CommentCount: lastRecord[4].(int),
 		URL:          lastRecord[5].(string),
 	}
 

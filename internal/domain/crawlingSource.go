@@ -12,13 +12,18 @@ const (
 )
 
 type CrawlingSource struct {
-	SourceName      string // Name for identify
-	SourceID        string // channel ID, blog ID or URL
-	SpreadSheetID   string // Google SpreadSheet ID: 1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY
-	SpreadSheetName string // Sheet name in SpreadSheet
+	ID              uint `gorm:"primaryKey"` // ID is the primary key
 	Type            CrawlingSourceType
-	NaverListID     string   // Naver Blog List ID
-	NaverListName   string   // Naver Map List Name
-	WebhookURL      string   // Webhook URL for slack
-	Constraint      []string // filterings of source
+	SourceName      string
+	SourceID        string // Channel ID for Youtube, Blog ID for NaverBlog, User ID for Instagram, Cafe ID for DaumCafe
+	SpreadSheetID   string // Sheet ID not to be used in DB
+	SpreadSheetName string // Sheet name not to be used in DB
+	NaverListID     string
+	NaverListName   string
+	WebhookURL      string   // webhook URL for slack notification
+	Constraint      []string // Constraint for filters
+}
+
+func (CrawlingSource) TableName() string {
+	return "crawling_sources"
 }

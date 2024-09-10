@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/chromedp/cdproto/cdp"
@@ -80,13 +81,15 @@ func extractArticles(ctx context.Context) ([]*domain.GuestArticle, error) {
 			return nil, err
 		}
 
-		// Append the extracted details to the articles list
+		viewCnt, _ := strconv.Atoi(viewCount)
+		commentCnt, _ := strconv.Atoi(commentCount)
+
 		articles = append(articles, &domain.GuestArticle{
 			TxtDetail:    txtDetail,
 			Username:     username,
 			CreatedAt:    createdAt,
-			ViewCount:    viewCount,
-			CommentCount: commentCount,
+			ViewCount:    viewCnt,
+			CommentCount: commentCnt,
 			URL:          articleURL,
 		})
 	}

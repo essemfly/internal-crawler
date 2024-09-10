@@ -14,30 +14,38 @@ const (
 )
 
 type DaangnProduct struct {
-	DanggnIndex       string       `json:"danggn_index"`
-	Keyword           string       `json:"keyword"`
-	KeywordGroup      string       `json:"keyword_group"`
-	Name              string       `json:"name"`
-	Description       string       `json:"description"`
+	ID                uint         `gorm:"primaryKey"` // Primary key
+	DanggnIndex       string       `json:"danggn_index" gorm:"type:varchar(255)"`
+	Keyword           string       `json:"keyword" gorm:"type:varchar(255)"`
+	KeywordGroup      string       `json:"keyword_group" gorm:"type:varchar(255)"`
+	Name              string       `json:"name" gorm:"type:varchar(255)"`
+	Description       string       `json:"description" gorm:"type:text"`
 	Price             int          `json:"price"`
-	Images            []string     `json:"images"`
-	Status            DanggnStatus `json:"status"`
-	Url               string       `json:"url"`
+	Images            []string     `json:"images" gorm:"-"` // Excluded from the DB
+	Status            DanggnStatus `json:"status" gorm:"type:varchar(20)"`
+	Url               string       `json:"url" gorm:"type:varchar(255)"`
 	ViewCounts        int          `json:"view_counts"`
 	LikeCounts        int          `json:"like_counts"`
 	ChatCounts        int          `json:"chat_counts"`
-	CrawlCategory     string       `json:"crawl_category"`
-	SellerNickName    string       `json:"seller_nickname"`
-	SellerRegionName  string       `json:"seller_region_name"`
-	SellerTemperature string       `json:"seller_temperature"`
+	CrawlCategory     string       `json:"crawl_category" gorm:"type:varchar(255)"`
+	SellerNickName    string       `json:"seller_nickname" gorm:"type:varchar(255)"`
+	SellerRegionName  string       `json:"seller_region_name" gorm:"type:varchar(255)"`
+	SellerTemperature string       `json:"seller_temperature" gorm:"type:varchar(255)"`
 	WrittenAt         time.Time    `json:"written_at"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
 }
 
+// DaangnKeyword represents a keyword used for Daangn search
 type DaangnKeyword struct {
-	Keyword   string    `json:"keyword"`
+	ID        uint      `gorm:"primaryKey"` // Primary key
+	Keyword   string    `json:"keyword" gorm:"type:varchar(255)"`
 	IsLive    bool      `json:"is_live"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type DaangnConfig struct {
+	ID         uint `gorm:"primaryKey"` // Primary key
+	CurrentIdx int  `json:"current_idx"`
 }

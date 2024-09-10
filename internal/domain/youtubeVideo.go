@@ -9,6 +9,7 @@ import (
 )
 
 type YoutubeVideoStruct struct {
+	ID           uint `gorm:"primaryKey"` // Primary key field
 	VideoID      string
 	IsProcessed  bool
 	NaverLink    string
@@ -17,6 +18,10 @@ type YoutubeVideoStruct struct {
 	Description  string
 	YouTubeLink  string
 	ThumbnailURL string
+}
+
+func (YoutubeVideoStruct) TableName() string {
+	return "youtube"
 }
 
 func ConvertToYoutubeVideoStruct(videos []*youtube.PlaylistItem) []*YoutubeVideoStruct {
