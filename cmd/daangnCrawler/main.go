@@ -8,16 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
 	"github.com/essemfly/internal-crawler/internal/domain"
+	"github.com/essemfly/internal-crawler/internal/repository"
 	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/essemfly/internal-crawler/internal/updating"
-	"github.com/essemfly/internal-crawler/pkg"
 	"github.com/joho/godotenv"
-	"google.golang.org/api/sheets/v4"
-
-	"go.uber.org/zap"
 )
 
 const (
@@ -26,7 +22,7 @@ const (
 	waitTime         = 2
 	numRetries       = 8
 	randomRange      = 30
-	GlobalStartIndex = 783940000 // 2023-02-14 17:00:00
+	GlobalStartIndex = 830068400 // 2024-09-11 21:00:00
 	// 788540500 : 2024-06-20 10:00:00
 	// 783940000 : 2024-06-11 14:00:00
 	// 533830000 : 2023-02-13 04:00:00
@@ -42,20 +38,7 @@ func loadEnv() error {
 	return nil
 }
 
-func initialize() (*domain.CrawlingSource, *sheets.Service, error) {
-	sources := seed.ListSources(domain.Daangn)
-	channel := sources[0]
-
-	log.Println("Initialize with channel: ", channel.SourceName)
-	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
-	if err != nil {
-		return channel, nil, err
-	}
-
-	return channel, sheetsService, nil
-}
-
-func crawlAndProcess(channel *domain.CrawlingSource, sheetsService *sheets.Service, keywords []string, startIndex, lastIndex int) error {
+func crawlAndProcess(daangnSrv *repository.DaangnService, channel *domain.CrawlingSource, keywords []*domain.DaangnKeyword, startIndex, lastIndex int) error {
 	var wg sync.WaitGroup
 	errChan := make(chan error, numWorkers)
 	rangeSize := (lastIndex - startIndex + 1) / numWorkers
@@ -70,7 +53,7 @@ func crawlAndProcess(channel *domain.CrawlingSource, sheetsService *sheets.Servi
 				localLastIndex = lastIndex
 			}
 
-			if err := crawlAndSave(channel, sheetsService, keywords, localStartIndex, localLastIndex); err != nil {
+			if err := crawlAndSave(daangnSrv, channel, keywords, localStartIndex, localLastIndex); err != nil {
 				errChan <- err
 			}
 		}(workerIndex)
@@ -89,7 +72,7 @@ func crawlAndProcess(channel *domain.CrawlingSource, sheetsService *sheets.Servi
 	return nil
 }
 
-func crawlAndSave(channel *domain.CrawlingSource, sheetsService *sheets.Service, keywords []string, startIndex, lastIndex int) error {
+func crawlAndSave(daangnSrv *repository.DaangnService, channel *domain.CrawlingSource, keywords []*domain.DaangnKeyword, startIndex, lastIndex int) error {
 	newPds, err := crawling.CrawlDanggnIndex(channel, keywords, startIndex, lastIndex)
 	if err != nil {
 		return fmt.Errorf("forbidden error encountered in CrawlDanggnIndex: %v", err)
@@ -98,13 +81,12 @@ func crawlAndSave(channel *domain.CrawlingSource, sheetsService *sheets.Service,
 	for _, pd := range newPds {
 		if err := updating.SendDaangnProductToSlack(channel, pd); err != nil {
 			log.Println("Failed to send daangn product to slack:", err)
-			continue
 		}
-		if err := updating.SaveToSheetAppend(sheetsService, channel, newPds); err != nil {
-			log.Println("Failed to save to sheet:", err)
-			continue
+		if err = daangnSrv.CreateDaangnProduct(pd); err != nil {
+			log.Println("failed to save daangn products: %v", err)
 		}
 	}
+
 	return nil
 }
 
@@ -114,22 +96,21 @@ func main() {
 		return
 	}
 
-	channel, sheetsService, err := initialize()
+	sources := seed.ListSources(domain.Daangn)
+	channel := sources[0]
+
+	daangnSvc := repository.NewDaangnService()
+	currentConfig, err := daangnSvc.GetLastDaangnConfig()
 	if err != nil {
-		log.Fatalf("Initialization error: %v", err)
+		log.Fatalf("Error getting last index: %v", err)
 	}
 
-	lastIndex, err := updating.ReadLastIndex(sheetsService, channel)
-	if err != nil {
-		log.Fatalf("Error reading last index: %v", err)
+	keywords, err := daangnSvc.ListLiveDaangnKeywords()
+	if err != nil || len(keywords) == 0 {
+		log.Fatalf("Error getting live keywords: %v", err)
 	}
 
-	keywords, err := updating.ReadKeywords(sheetsService, channel)
-	if err != nil {
-		log.Fatalln("failed to find live keywords", zap.Error(err))
-		return
-	}
-
+	lastIndex := currentConfig.CurrentIdx
 	log.Println("Last Index with keywords ", lastIndex, keywords)
 
 	for {
@@ -141,11 +122,12 @@ func main() {
 		startIndex := lastIndex + 1
 		lastIndex = startIndex + chunkSize - 1
 
-		if err := crawlAndProcess(channel, sheetsService, keywords, startIndex, lastIndex); err != nil {
+		if err := crawlAndProcess(daangnSvc, channel, keywords, startIndex, lastIndex); err != nil {
 			log.Fatalf("Processing error: %v", err)
 		}
 		lastIndex += chunkSize
-		if err := updating.UpdateLastIndex(sheetsService, channel, lastIndex); err != nil {
+
+		if err := daangnSvc.UpdateDaangnConfig(&domain.DaangnConfig{CurrentIdx: lastIndex}); err != nil {
 			log.Fatalf("Error updating last index: %v", err)
 		}
 	}

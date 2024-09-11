@@ -17,10 +17,11 @@ const (
 	waitTime   = 1
 )
 
-func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []string, startIndex, lastIndex int) ([]*domain.DaangnProduct, error) {
+func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []*domain.DaangnKeyword, startIndex, lastIndex int) ([]*domain.DaangnProduct, error) {
 	log.Println("start crawling danggn index", zap.Int("startIndex", startIndex), zap.Int("lastIndex", lastIndex))
 	pds := []*domain.DaangnProduct{}
 	for i := startIndex; i <= lastIndex; i++ {
+		log.Println("index", i)
 		newProduct, err := CrawlPage(i)
 		if err != nil {
 			if err.Error() == "Not Found" {
@@ -129,10 +130,10 @@ func CrawlPage(index int) (*domain.DaangnProduct, error) {
 	return &newProduct, nil
 }
 
-func addProductForKeywords(pds []*domain.DaangnProduct, product *domain.DaangnProduct, keywords []string) []*domain.DaangnProduct {
+func addProductForKeywords(pds []*domain.DaangnProduct, product *domain.DaangnProduct, keywords []*domain.DaangnKeyword) []*domain.DaangnProduct {
 	for _, keyword := range keywords {
-		if strings.Contains(product.Name, keyword) {
-			product.Keyword = keyword
+		if strings.Contains(product.Name, keyword.Keyword) {
+			product.Keyword = keyword.Keyword
 			pds = append(pds, product)
 		}
 	}

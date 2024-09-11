@@ -57,8 +57,8 @@ func (ds *DaangnService) UpdateDaangnKeyword(keyword *domain.DaangnKeyword) erro
 	return result.Error
 }
 
-func (ds *DaangnService) ListLiveDaangnKeywords() ([]domain.DaangnKeyword, error) {
-	var keywords []domain.DaangnKeyword
+func (ds *DaangnService) ListLiveDaangnKeywords() ([]*domain.DaangnKeyword, error) {
+	var keywords []*domain.DaangnKeyword
 	result := ds.db.Where("is_live = ?", true).Find(&keywords)
 	return keywords, result.Error
 }
@@ -74,9 +74,9 @@ func (ds *DaangnService) CreateDaangnConfig(config *domain.DaangnConfig) error {
 	return result.Error
 }
 
-func (ds *DaangnService) GetDaangnConfig() (*domain.DaangnConfig, error) {
+func (ds *DaangnService) GetLastDaangnConfig() (*domain.DaangnConfig, error) {
 	var config domain.DaangnConfig
-	result := ds.db.First(&config)
+	result := ds.db.Order("id desc").First(&config)
 	return &config, result.Error
 }
 
