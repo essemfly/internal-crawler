@@ -29,13 +29,25 @@ func main() {
 	sources := seed.ListSources(domain.NaverBlog)
 	for _, channel := range sources {
 		categories := strings.Split(channel.Constraint, ",")
+		latestDate, err := naverBlogSrvc.GetLatestArticleDate(channel.SourceName)
+		if err != nil {
+			log.Println("Err", err)
+			panic(err)
+		}
+
 		for _, categoryNo := range categories {
-			posts, err := crawling.FetchAllBlogPostsByCategory(categoryNo, channel, NUM_WORKERS)
+			posts, err := crawling.FetchAllBlogPostsByCategory(categoryNo, channel, NUM_WORKERS, latestDate)
 			if err != nil {
 				log.Println("Err", err)
 				panic(err)
 			}
-			naverBlogSrvc.CreateNaverBlogArticles(posts)
+
+			if len(posts) > 0 {
+				naverBlogSrvc.CreateNaverBlogArticles(posts)
+				log.Printf("Added %d new posts for category %s\n", len(posts), crawling.GetContentKeyValues(channel.SourceName, categoryNo))
+			} else {
+				log.Printf("No new posts for category %s\n", crawling.GetContentKeyValues(channel.SourceName, categoryNo))
+			}
 		}
 	}
 }

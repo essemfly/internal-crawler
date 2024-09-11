@@ -45,6 +45,12 @@ jobs:
     - name: Run
       run: ./guest
 
+    - name: Build
+      run:  go build -o blog cmd/naverBlogCrawler/main.go
+
+    - name: Run
+      run: ./blog
+
     # - name: Build
     #   run: go build -o daangn cmd/daangnCrawler/main.go
 

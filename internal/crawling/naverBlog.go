@@ -43,7 +43,7 @@ func FetchAllBlogPosts(source *domain.CrawlingSource, workers int) ([]*domain.Na
 
 	categories := strings.Split(source.Constraint, ",")
 	for _, categoryNo := range categories {
-		posts, err := FetchAllBlogPostsByCategory(categoryNo, source, workers)
+		posts, err := FetchAllBlogPostsByCategory(categoryNo, source, workers, time.Time{})
 		if err != nil {
 			return nil, err
 		}
@@ -53,26 +53,52 @@ func FetchAllBlogPosts(source *domain.CrawlingSource, workers int) ([]*domain.Na
 	return totalPosts, nil
 }
 
-func FetchAllBlogPostsByCategory(categoryNo string, source *domain.CrawlingSource, workers int) ([]*domain.NaverBlogArticle, error) {
+func FetchAllBlogPostsByCategory(categoryNo string, source *domain.CrawlingSource, workers int, latestDate time.Time) ([]*domain.NaverBlogArticle, error) {
 	blogId := source.SourceID
 	var totalPosts []*domain.NaverBlogArticle
 
-	log.Println("Source: "+source.SourceName+" Category: ", categoryNo)
 	// 첫 번째 페이지를 가져와서 전체 페이지 수 계산
 	firstPagePosts, totalPages, err := FetchBlogPosts(blogId, categoryNo, 1)
-	log.Println("Total Pages #: " + strconv.Itoa(totalPages))
 	if err != nil {
 		log.Println("ERR HERE?", err)
 		return nil, err
 	}
-	totalPosts = append(totalPosts, firstPagePosts...)
+
+	log.Println("Source: "+source.SourceName+" Category: ", GetContentKeyValues(source.SourceName, categoryNo), " Total pages: ", totalPages)
+
+	for _, post := range firstPagePosts {
+		postDate, err := parseKoreanDate(post.PostDate)
+		if err != nil {
+			log.Printf("Failed to parse Korean date: %v\n", err)
+			continue
+		}
+
+		if postDate.After(latestDate) {
+			totalPosts = append(totalPosts, post)
+		} else {
+			return totalPosts, nil
+		}
+	}
 
 	for i := 2; i <= totalPages; i++ {
 		newPosts, _, err := FetchBlogPosts(blogId, categoryNo, i)
 		if err != nil {
 			return nil, err
 		}
-		totalPosts = append(totalPosts, newPosts...)
+
+		for _, post := range newPosts {
+			postDate, err := parseKoreanDate(post.PostDate)
+			if err != nil {
+				log.Printf("Failed to parse Korean date: %v\n", err)
+				continue
+			}
+
+			if postDate.After(latestDate) {
+				totalPosts = append(totalPosts, post)
+			} else {
+				return totalPosts, nil
+			}
+		}
 	}
 
 	return totalPosts, nil
@@ -121,10 +147,8 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 		post.Title = decodedTitle
 
 		content := blogId + "- "
-		if blogId == "mardukas" {
-			content += getContentKeyValues(blogId, categoryNo)
-		} else if blogId == "paperchan" {
-			content += getContentKeyValues(blogId, categoryNo)
+		if blogId == "mardukas" || blogId == "paperchan" {
+			content += GetContentKeyValues(blogId, categoryNo)
 		} else {
 			content += categoryNo
 		}
@@ -136,9 +160,10 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 			ArticleID:   post.LogNo,
 			ArticleLink: baseURL + post.LogNo,
 			Title:       post.Title,
-			Content:     blogId + "- " + getContentKeyValues(blogId, categoryNo),
+			Content:     blogId + "- " + GetContentKeyValues(blogId, categoryNo),
 			PostDate:    post.AddDate,
 			NaverPlaces: strings.Join(placesUrls, ","),
+			CreatedAt:   time.Now(),
 		},
 		)
 	}
@@ -319,7 +344,7 @@ func extractLoacionIdFromSrc(src string) string {
 	return ""
 }
 
-func getContentKeyValues(blogId, categoryNo string) string {
+func GetContentKeyValues(blogId, categoryNo string) string {
 	if blogId == "mardukas" {
 		if categoryNo == "9" {
 			return "서울추천맛집(한식)"
@@ -357,4 +382,15 @@ func getContentKeyValues(blogId, categoryNo string) string {
 	}
 
 	return ""
+}
+
+func parseKoreanDate(dateStr string) (time.Time, error) {
+	layout := "2006. 1. 2."
+
+	parsedTime, err := time.Parse(layout, dateStr)
+	if err != nil {
+		fmt.Println("에러 발생:", err)
+		return time.Time{}, err
+	}
+	return parsedTime, nil
 }
