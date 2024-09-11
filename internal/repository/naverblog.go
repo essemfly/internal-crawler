@@ -17,3 +17,13 @@ func NewNaverBlogService() *NaverBlogService {
 		db,
 	}
 }
+
+func (ns *NaverBlogService) CreateNaverBlogArticle(article *domain.NaverBlogArticle) error {
+	result := ns.db.Create(article)
+	return result.Error
+}
+
+func (ns *NaverBlogService) CreateNaverBlogArticles(articles []*domain.NaverBlogArticle) error {
+	result := ns.db.Create(articles)
+	return result.Error
+}

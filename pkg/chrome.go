@@ -8,7 +8,10 @@ import (
 
 func OpenChrome() (context.Context, context.CancelFunc) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
+		chromedp.Headless,              // Run in headless mode (no GUI)
+		chromedp.DisableGPU,            // Disable GPU to avoid unnecessary resources
+		chromedp.NoDefaultBrowserCheck, // Disable default browser check
+		chromedp.NoFirstRun,
 	)
 
 	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(context.Background(), opts...)

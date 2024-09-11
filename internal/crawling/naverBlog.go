@@ -39,28 +39,40 @@ type ModuleData struct {
 }
 
 func FetchAllBlogPosts(source *domain.CrawlingSource, workers int) ([]*domain.NaverBlogArticle, error) {
+	var totalPosts []*domain.NaverBlogArticle
+
+	categories := strings.Split(source.Constraint, ",")
+	for _, categoryNo := range categories {
+		posts, err := FetchAllBlogPostsByCategory(categoryNo, source, workers)
+		if err != nil {
+			return nil, err
+		}
+		totalPosts = append(totalPosts, posts...)
+	}
+
+	return totalPosts, nil
+}
+
+func FetchAllBlogPostsByCategory(categoryNo string, source *domain.CrawlingSource, workers int) ([]*domain.NaverBlogArticle, error) {
 	blogId := source.SourceID
 	var totalPosts []*domain.NaverBlogArticle
 
-	for _, categoryNo := range source.Constraint {
-		log.Println("Source: "+source.SourceName+" Category: ", categoryNo)
-		// 첫 번째 페이지를 가져와서 전체 페이지 수 계산
-		firstPagePosts, totalPages, err := FetchBlogPosts(blogId, categoryNo, 1)
-		log.Println("Total Pages #: " + strconv.Itoa(totalPages))
+	log.Println("Source: "+source.SourceName+" Category: ", categoryNo)
+	// 첫 번째 페이지를 가져와서 전체 페이지 수 계산
+	firstPagePosts, totalPages, err := FetchBlogPosts(blogId, categoryNo, 1)
+	log.Println("Total Pages #: " + strconv.Itoa(totalPages))
+	if err != nil {
+		log.Println("ERR HERE?", err)
+		return nil, err
+	}
+	totalPosts = append(totalPosts, firstPagePosts...)
+
+	for i := 2; i <= totalPages; i++ {
+		newPosts, _, err := FetchBlogPosts(blogId, categoryNo, i)
 		if err != nil {
-			log.Println("ERR HERE?", err)
 			return nil, err
 		}
-		totalPosts = append(totalPosts, firstPagePosts...)
-
-		for i := 2; i <= totalPages; i++ {
-			newPosts, _, err := FetchBlogPosts(blogId, categoryNo, i)
-			if err != nil {
-				return nil, err
-			}
-			totalPosts = append(totalPosts, newPosts...)
-		}
-
+		totalPosts = append(totalPosts, newPosts...)
 	}
 
 	return totalPosts, nil
@@ -75,7 +87,6 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 	categoryUrl := fmt.Sprintf("https://blog.naver.com/PostTitleListAsync.naver?blogId=%s&currentPage=%d&categoryNo=%s&countPerPage=30",
 		blogId, currentPage, categoryNo)
 
-	log.Println("3-12", categoryUrl)
 	// HTTP GET 요청
 	resp, err := http.Get(categoryUrl)
 	if err != nil {
@@ -108,8 +119,6 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 			continue
 		}
 		post.Title = decodedTitle
-		places := ParseNaverMapUrl(blogId, post.LogNo)
-		log.Println("URL: "+baseURL+post.LogNo+", PLACES", places)
 
 		content := blogId + "- "
 		if blogId == "mardukas" {
@@ -120,13 +129,16 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 			content += categoryNo
 		}
 
+		placesUrls := ParseNaverMapUrl(blogId, post.LogNo)
+
 		posts = append(posts, &domain.NaverBlogArticle{
+			Channel:     blogId,
 			ArticleID:   post.LogNo,
 			ArticleLink: baseURL + post.LogNo,
 			Title:       post.Title,
 			Content:     blogId + "- " + categoryNo,
 			PostDate:    post.AddDate,
-			NaverPlaces: ParseNaverMapUrl(blogId, post.LogNo),
+			NaverPlaces: strings.Join(placesUrls, ","),
 		},
 		)
 	}
@@ -149,7 +161,6 @@ func ParseNaverMapUrl(blogId, logNo string) []string {
 	// URL 생성
 	url := fmt.Sprintf("https://blog.naver.com/PostView.naver?blogId=%s&logNo=%s", blogId, logNo)
 
-	log.Println("3-13", url)
 	// HTTP GET 요청
 	resp, err := http.Get(url)
 	if err != nil {
@@ -193,11 +204,9 @@ func ParseNaverMapUrl(blogId, logNo string) []string {
 		}
 
 		if n.Type == html.ElementNode && n.Data == "iframe" {
-			log.Println("HOIT?!", n)
 			var src string
 			for _, attr := range n.Attr {
 				if attr.Key == "src" {
-					log.Println("SRC: ", attr.Val)
 					src = attr.Val
 					// Extract the number after @s in the src attribute
 					locationId := extractLoacionIdFromSrc(src)
@@ -249,6 +258,9 @@ func extractPlaceIds(jsonStr string) []string {
 	var results []string
 
 	for _, placeId := range placeIds {
+		if placeId == "" {
+			continue
+		}
 		fullUrl := fmt.Sprintf("https://map.naver.com/p/entry/place/%s", placeId)
 		results = append(results, fullUrl)
 	}
@@ -289,6 +301,10 @@ func extractLocationIdFromDataModule(dataModule string) string {
 	}
 
 	locationId := moduleData.Data.LocationId
+	if locationId == "" {
+		return ""
+	}
+
 	fullUrl := fmt.Sprintf("https://map.naver.com/p/entry/place/%s", locationId)
 	return fullUrl
 }

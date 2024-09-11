@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
 	"github.com/essemfly/internal-crawler/internal/domain"
-	"github.com/essemfly/internal-crawler/internal/updating"
-	"github.com/essemfly/internal-crawler/pkg"
+	"github.com/essemfly/internal-crawler/internal/repository"
+	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/joho/godotenv"
 )
 
@@ -24,41 +24,18 @@ func main() {
 		return
 	}
 
-	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
-	if err != nil {
-		log.Fatalf("Error creating Sheets service: %v", err)
-	}
-	// sources := seed.ListSources(domain.NaverBlog)
+	naverBlogSrvc := repository.NewNaverBlogService()
 
-	sources := []domain.CrawlingSource{
-		{SourceName: "mardukas",
-			SourceID: "mardukas",
-			Type:     domain.NaverBlog,
-			Constraint: []string{
-				"9", "61", "62", "111", "65", "66", "1", "68", "70", "67",
-			},
-			SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
-			SpreadSheetName: "mardukas",
-		},
-		{SourceName: "paperchan",
-			SourceID: "paperchan",
-			Type:     domain.NaverBlog,
-			Constraint: []string{
-				"5", "2", "3", "4", "15",
-			},
-			SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
-			SpreadSheetName: "paperchan",
-		},
-	}
-
+	sources := seed.ListSources(domain.NaverBlog)
 	for _, channel := range sources {
-		posts, err := crawling.FetchAllBlogPosts(&channel, 1)
-		if err != nil {
-			log.Println("Err", err)
-			panic(err)
+		categories := strings.Split(channel.Constraint, ",")
+		for _, categoryNo := range categories {
+			posts, err := crawling.FetchAllBlogPostsByCategory(categoryNo, channel, NUM_WORKERS)
+			if err != nil {
+				log.Println("Err", err)
+				panic(err)
+			}
+			naverBlogSrvc.CreateNaverBlogArticles(posts)
 		}
-
-		updating.SaveToSheetAppendNaverBlog(sheetsService, &channel, posts)
 	}
-
 }

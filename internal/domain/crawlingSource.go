@@ -20,8 +20,8 @@ type CrawlingSource struct {
 	SpreadSheetName string // Sheet name not to be used in DB
 	NaverListID     string
 	NaverListName   string
-	WebhookURL      string   // webhook URL for slack notification
-	Constraint      []string // Constraint for filters
+	WebhookURL      string // webhook URL for slack notification
+	Constraint      string // Constraint for filters
 }
 
 func (CrawlingSource) TableName() string {

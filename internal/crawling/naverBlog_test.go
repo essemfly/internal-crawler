@@ -28,4 +28,14 @@ func TestParseNaverMapUrl(t *testing.T) {
 	result3 := crawling.ParseNaverMapUrl(blogId, logNo3)
 	log.Println("Result3: ", result3)
 	assert.Equal(t, []string{"https://map.naver.com/p/entry/place/11888725"}, result3)
+
+	logNo4 := "223358501558"
+	result4 := crawling.ParseNaverMapUrl(blogId, logNo4)
+	log.Println("Result4: ", result4)
+	assert.Equal(t, []string(nil), result4)
+
+	logNo5 := "222992469510"
+	result5 := crawling.ParseNaverMapUrl(blogId, logNo5)
+	log.Println("Result5: ", result5)
+	assert.Equal(t, []string(nil), result5)
 }

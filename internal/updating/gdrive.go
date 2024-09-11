@@ -19,8 +19,10 @@ func SaveToSheetAtTop(service *sheets.Service, channel *domain.CrawlingSource, v
 	var newData [][]interface{}
 	for _, video := range videos {
 		row := structToSlice(video)
-		if len(channel.Constraint) > 0 {
-			for _, constraint := range channel.Constraint {
+
+		constraints := strings.Split(channel.Constraint, ",")
+		if len(constraints) > 0 {
+			for _, constraint := range constraints {
 				if !strings.Contains(video.Description, constraint) && !strings.Contains(video.Title, constraint) {
 					continue
 				}
@@ -203,8 +205,9 @@ func SaveToSheetAppend(service *sheets.Service, channel *domain.CrawlingSource, 
 			product.CreatedAt.Format(time.RFC3339),
 			product.UpdatedAt.Format(time.RFC3339),
 		}
-		if len(channel.Constraint) > 0 {
-			for _, constraint := range channel.Constraint {
+		constraints := strings.Split(channel.Constraint, ",")
+		if len(constraints) > 0 {
+			for _, constraint := range constraints {
 				if !strings.Contains(product.Description, constraint) && !strings.Contains(product.Name, constraint) {
 					continue
 				}
@@ -317,7 +320,7 @@ func SaveToSheetAppendNaverBlog(service *sheets.Service, channel *domain.Crawlin
 			article.ArticleLink,
 			false,
 			article.Title,
-			strings.Join(article.NaverPlaces, ","),
+			article.NaverPlaces,
 			article.Content,
 			article.PostDate,
 		}

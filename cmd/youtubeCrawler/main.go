@@ -32,9 +32,6 @@ func main() {
 
 	sources := seed.ListSources(domain.Youtube)
 	for _, channel := range sources {
-		if channel.SourceName != "김사원세끼" {
-			continue
-		}
 		log.Println("Starting YouTube Crawler named: " + channel.SourceName)
 		latestVideo, err := youtubeRepository.GetLastVideo(channel.SourceName)
 		if err != nil {

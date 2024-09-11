@@ -32,9 +32,9 @@ func (cs *CrawlingService) GetCrawlingSourceByID(id uint) (*domain.CrawlingSourc
 }
 
 // GetAllCrawlingSources retrieves all CrawlingSource records from the database
-func (cs *CrawlingService) GetAllCrawlingSources() ([]domain.CrawlingSource, error) {
-	var sources []domain.CrawlingSource
-	result := cs.db.Find(&sources)
+func (cs *CrawlingService) ListAllCrawlingSources() ([]*domain.CrawlingSource, error) {
+	var sources []*domain.CrawlingSource
+	result := cs.db.Find(&sources) // pass a pointer to the slice
 	return sources, result.Error
 }
 
