@@ -40,3 +40,26 @@ func main() {
 
 	defer cancel()
 }
+
+func test() {
+	err := godotenv.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("Error loading .env file:", err)
+		return
+	}
+
+	ctx, cancel := pkg.OpenChrome()
+	registering.NaverLogin(ctx)
+	defer cancel()
+
+	testSource := &domain.CrawlingSource{
+		NaverListName: "테스트",
+		NaverListID:   "1123eae3eca246a78d0b846683bf1a5c",
+	}
+
+	video := &domain.YoutubeVideoStruct{
+		NaverLink: "https://map.naver.com/p/entry/place/37163963",
+	}
+	registering.AddStoreToList(ctx, testSource, []*domain.YoutubeVideoStruct{video})
+	registering.AddStoreToList(ctx, testSource, []*domain.YoutubeVideoStruct{video})
+}

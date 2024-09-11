@@ -8,12 +8,11 @@ import (
 
 func OpenChrome() (context.Context, context.CancelFunc) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Headless,              // Run in headless mode (no GUI)
-		chromedp.DisableGPU,            // Disable GPU to avoid unnecessary resources
-		chromedp.NoDefaultBrowserCheck, // Disable default browser check
-		chromedp.NoFirstRun,
+		chromedp.Flag("headless", true),            // GUI 모드로 실행
+		chromedp.Flag("start-maximized", false),    // 브라우저 창 최대화
+		chromedp.Flag("enable-automation", false),  // 자동화 배너 비활성화
+		chromedp.Flag("disable-extensions", false), // 확장 프로그램 활성화 (필요한 경우)
 	)
-
 	allocatorCtx, allocatorCancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	ctx, cancel := chromedp.NewContext(allocatorCtx)
 

@@ -19,12 +19,15 @@ func AddStoreToList(ctx context.Context, channel *domain.CrawlingSource, videos 
 
 	saveButtonName := "저장"
 	emptyStoreName := "플레이스"
+	alreadySaved := "선택됨"
 
 	for _, video := range videos {
 		if video.NaverLink != "" {
 			links := strings.Split(video.NaverLink, ",")
 			for _, link := range links {
 				var storeName string
+				var isSelected string
+
 				err := chromedp.Run(ctx,
 					chromedp.Navigate(link),
 					chromedp.WaitVisible(bodySelector, chromedp.ByQuery),
@@ -40,9 +43,20 @@ func AddStoreToList(ctx context.Context, channel *domain.CrawlingSource, videos 
 
 				err = chromedp.Run(ctx,
 					chromedp.Click(bookmarkSelector, chromedp.NodeVisible),
-					chromedp.Sleep(3*time.Second),
+					chromedp.Sleep(1*time.Second),
+					chromedp.Text(fmt.Sprintf(`//button[.//strong[contains(text(), "%s")]]//span[contains(@class, "swt-save-group-check-area")]//span[contains(@class, "swt-blind")]`, channel.NaverListName), &isSelected, chromedp.NodeVisible),
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				if isSelected == alreadySaved {
+					continue
+				}
+
+				err = chromedp.Run(ctx,
 					chromedp.Click(fmt.Sprintf(`//button[.//strong[contains(text(), "%s")]]`, channel.NaverListName), chromedp.NodeVisible),
-					chromedp.Sleep(3*time.Second),
+					chromedp.Sleep(1*time.Second),
 				)
 				if err != nil {
 					log.Fatal(err)
