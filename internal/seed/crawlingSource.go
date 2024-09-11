@@ -86,7 +86,7 @@ func CrawlingSeeds() {
 		SpreadSheetName: "김사원세끼",
 		NaverListID:     "df3adacda4e34ecf8a457bffded5dd95",
 		NaverListName:   "김사원세끼 모음",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("YOUTUBE_WEBHOOK"),
 	}
 
 	bakMarket := domain.CrawlingSource{
@@ -97,7 +97,7 @@ func CrawlingSeeds() {
 		SpreadSheetName: "그시장에가오",
 		NaverListID:     "f35771875a2a4bd39b0665c573a330ff",
 		NaverListName:   "님아 그 시장을 가오",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("YOUTUBE_WEBHOOK"),
 		Constraint:      "그 시장을 가오_EP",
 	}
 
@@ -109,7 +109,7 @@ func CrawlingSeeds() {
 		SpreadSheetName: "먹을텐데",
 		NaverListID:     "7a6f094ce74a4617af423bf2fb0c4582",
 		NaverListName:   "성시경의 먹을텐데",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("YOUTUBE_WEBHOOK"),
 		Constraint:      "먹을텐데",
 	}
 
@@ -119,7 +119,7 @@ func CrawlingSeeds() {
 		SourceID:        "https://www.wishket.com/project/?d=M4JwLgvAdgpg7gMhgYwCYQCogK4yA%3D%3D%3D",
 		SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
 		SpreadSheetName: "wishket",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("WISHKET_WEBHOOK"),
 	}
 
 	basketGuest := domain.CrawlingSource{
@@ -128,7 +128,7 @@ func CrawlingSeeds() {
 		SourceID:        "https://m.cafe.daum.net/dongarry/Dilr",
 		SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
 		SpreadSheetName: "농구게스트",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("BASKET_WEBHOOK"),
 	}
 
 	blogSources := []domain.CrawlingSource{
@@ -138,6 +138,7 @@ func CrawlingSeeds() {
 			Constraint:      "9,61,62,111,65,66,1,68,70,67",
 			SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
 			SpreadSheetName: "mardukas",
+			WebhookURL:      os.Getenv("YOUTUBE_WEBHOOK"),
 		},
 		{SourceName: "paperchan",
 			Type:            domain.NaverBlog,
@@ -145,6 +146,7 @@ func CrawlingSeeds() {
 			Constraint:      "5,2,3,4,15",
 			SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
 			SpreadSheetName: "paperchan",
+			WebhookURL:      os.Getenv("YOUTUBE_WEBHOOK"),
 		},
 	}
 
@@ -153,7 +155,7 @@ func CrawlingSeeds() {
 		SourceName:      "당근마켓",
 		SpreadSheetID:   "1ufLv1glLILVXP0ZZ5xue9f5JEUp1gauZfQzx9hmBoXY",
 		SpreadSheetName: "당근마켓",
-		WebhookURL:      "https://hooks.slack.com/services/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",
+		WebhookURL:      os.Getenv("DAANGN_WEBHOOK"),
 	}
 
 	daangnConfig := domain.DaangnConfig{
