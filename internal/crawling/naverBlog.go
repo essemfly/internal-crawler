@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -29,6 +30,12 @@ type Response struct {
 	PostList      []BlogPost `json:"postList"`
 	CountPerPage  string     `json:"countPerPage"`
 	TotalCount    string     `json:"totalCount"`
+}
+
+type ModuleData struct {
+	Data struct {
+		LocationId string `json:"locationId"`
+	} `json:"data"`
 }
 
 func FetchAllBlogPosts(source *domain.CrawlingSource, workers int) ([]*domain.NaverBlogArticle, error) {
@@ -142,6 +149,7 @@ func ParseNaverMapUrl(blogId, logNo string) []string {
 	// URL 생성
 	url := fmt.Sprintf("https://blog.naver.com/PostView.naver?blogId=%s&logNo=%s", blogId, logNo)
 
+	log.Println("3-13", url)
 	// HTTP GET 요청
 	resp, err := http.Get(url)
 	if err != nil {
@@ -172,31 +180,51 @@ func ParseNaverMapUrl(blogId, logNo string) []string {
 					// data-module 속성의 값을 찾음
 					for _, a := range n.Attr {
 						if a.Key == "data-module" && strings.Contains(a.Val, "\"type\":\"v2_map\"") {
-							// JSON 데이터를 추출하여 placeId 값을 파싱
 							placeIds = extractPlaceIds(a.Val)
+						} else if a.Key == "data-module" {
+							locationId := extractLocationIdFromDataModule(a.Val)
+							if locationId != "" {
+								placeIds = append(placeIds, locationId)
+							}
 						}
 					}
 				}
 			}
 		}
 
-		// "a" 태그에서 "data-linkdata" 속성을 찾아 locationId 추출
-		if n.Type == html.ElementNode && n.Data == "a" {
-			var dataLinkData string
+		if n.Type == html.ElementNode && n.Data == "iframe" {
+			log.Println("HOIT?!", n)
+			var src string
 			for _, attr := range n.Attr {
-				if attr.Key == "data-linkdata" {
-					dataLinkData = attr.Val
-				}
-			}
-
-			// data-linkdata가 있다면 JSON 형태로 파싱하여 locationId 추출
-			if dataLinkData != "" {
-				locationId := extractLocationId(dataLinkData)
-				if locationId != "" {
-					placeIds = append(placeIds, locationId)
+				if attr.Key == "src" {
+					log.Println("SRC: ", attr.Val)
+					src = attr.Val
+					// Extract the number after @s in the src attribute
+					locationId := extractLoacionIdFromSrc(src)
+					if locationId != "" {
+						placeIds = append(placeIds, locationId)
+					}
 				}
 			}
 		}
+
+		// // "a" 태그에서 "data-linkdata" 속성을 찾아 locationId 추출
+		// if n.Type == html.ElementNode && n.Data == "a" {
+		// 	var dataLinkData string
+		// 	for _, attr := range n.Attr {
+		// 		if attr.Key == "data-linkdata" {
+		// 			dataLinkData = attr.Val
+		// 		}
+		// 	}
+
+		// 	// data-linkdata가 있다면 JSON 형태로 파싱하여 locationId 추출
+		// 	if dataLinkData != "" {
+		// 		locationId := extractLocationId(dataLinkData)
+		// 		if locationId != "" {
+		// 			placeIds = append(placeIds, locationId)
+		// 		}
+		// 	}
+		// }
 
 		// 재귀적으로 모든 노드를 탐색
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -228,6 +256,8 @@ func extractPlaceIds(jsonStr string) []string {
 	return results
 }
 
+// Deprecated: data-linkdata 속성을 사용하여 locationId 값을 추출하는 방법
+/*
 func extractLocationId(data string) string {
 	// HTML 엔티티인 &quot;을 "로 변환
 	data = strings.ReplaceAll(data, "&quot;", "\"")
@@ -247,6 +277,30 @@ func extractLocationId(data string) string {
 	locationId := data[start : start+end]
 	fullUrl := fmt.Sprintf("https://map.naver.com/p/entry/place/%s", locationId)
 	return fullUrl
+}
+*/
+
+func extractLocationIdFromDataModule(dataModule string) string {
+	var moduleData ModuleData
+	err := json.Unmarshal([]byte(dataModule), &moduleData)
+	if err != nil {
+		fmt.Printf("Failed to parse data-module JSON: %v\n", err)
+		return ""
+	}
+
+	locationId := moduleData.Data.LocationId
+	fullUrl := fmt.Sprintf("https://map.naver.com/p/entry/place/%s", locationId)
+	return fullUrl
+}
+
+func extractLoacionIdFromSrc(src string) string {
+	// Regex to find the number after @s
+	re := regexp.MustCompile(`%40s(\d+)`)
+	match := re.FindStringSubmatch(src)
+	if len(match) > 1 {
+		return fmt.Sprintf("https://map.naver.com/p/entry/place/%s", match[1])
+	}
+	return ""
 }
 
 func getContentKeyValues(blogId, categoryNo string) string {
