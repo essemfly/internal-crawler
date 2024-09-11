@@ -6,17 +6,56 @@ import (
 	"log"
 	"os"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/crawling"
 	"github.com/essemfly/internal-crawler/internal/domain"
+	"github.com/essemfly/internal-crawler/internal/repository"
 	"github.com/essemfly/internal-crawler/internal/seed"
 	"github.com/essemfly/internal-crawler/internal/updating"
-	"github.com/essemfly/internal-crawler/pkg"
 	"github.com/joho/godotenv"
 	"google.golang.org/api/option"
 	"google.golang.org/api/youtube/v3"
 )
 
+func main() {
+	err := godotenv.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Println("Error loading .env file:", err)
+		return
+	}
+
+	youtubeRepository := repository.NewYoutubeService()
+
+	youtubeService, err := youtube.NewService(context.Background(), option.WithAPIKey(os.Getenv("YOUTUBE_API_KEY")))
+	if err != nil {
+		log.Fatalf("Error creating YouTube client: %v", err)
+	}
+
+	sources := seed.ListSources(domain.Youtube)
+	for _, channel := range sources {
+		if channel.SourceName != "김사원세끼" {
+			continue
+		}
+		log.Println("Starting YouTube Crawler named: " + channel.SourceName)
+		latestVideo, err := youtubeRepository.GetLastVideo(channel.SourceName)
+		if err != nil {
+			latestVideo = nil
+		}
+
+		videos, err := crawling.GetChannelVideos(youtubeService, channel.SourceID, latestVideo)
+		if err != nil {
+			log.Fatalf("Error fetching channel videos: %v", err)
+		}
+
+		videoStructs := domain.ConvertToYoutubeVideoStruct(videos, channel)
+		videoStructs = domain.FilterWithChannelConstraints(videoStructs, channel)
+
+		youtubeRepository.SaveVideoList(videoStructs)
+		updating.SendVideosToSlack(channel, videoStructs)
+	}
+}
+
+// Depreciated version for using google sheets
+/*
 func main() {
 	err := godotenv.Load()
 	if err != nil && !os.IsNotExist(err) {
@@ -52,5 +91,5 @@ func main() {
 		updating.SaveToSheetAtTop(sheetsService, channel, videoSheets)
 		updating.SendVideosToSlack(channel, videoSheets)
 	}
-
 }
+*/

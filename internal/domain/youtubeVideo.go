@@ -10,6 +10,7 @@ import (
 
 type YoutubeVideoStruct struct {
 	ID           uint `gorm:"primaryKey"` // Primary key field
+	Channel      string
 	VideoID      string
 	IsProcessed  bool
 	NaverLink    string
@@ -24,12 +25,13 @@ func (YoutubeVideoStruct) TableName() string {
 	return "youtubes"
 }
 
-func ConvertToYoutubeVideoStruct(videos []*youtube.PlaylistItem) []*YoutubeVideoStruct {
+func ConvertToYoutubeVideoStruct(videos []*youtube.PlaylistItem, channel *CrawlingSource) []*YoutubeVideoStruct {
 	var result []*YoutubeVideoStruct
 	for _, item := range videos {
 		videoID := item.Snippet.ResourceId.VideoId
 		naverLink := extractNaverURL(item.Snippet.Description)
 		row := YoutubeVideoStruct{
+			Channel:      channel.SourceName,
 			VideoID:      videoID,
 			IsProcessed:  false,
 			NaverLink:    naverLink,

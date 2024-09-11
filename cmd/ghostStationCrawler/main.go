@@ -56,7 +56,7 @@ func main() {
 
 		log.Println("Starting YouTube Crawler named: " + channel.SourceName)
 		log.Println("Number of videos: ", len(videos))
-		videoSheets := domain.ConvertToYoutubeVideoStruct(videos)
+		videoSheets := domain.ConvertToYoutubeVideoStruct(videos, &channel)
 
 		updating.SaveToSheetAtTop(sheetsService, &channel, videoSheets)
 	}

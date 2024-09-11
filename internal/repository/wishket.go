@@ -17,3 +17,19 @@ func NewWishketService() *WishketService {
 		db,
 	}
 }
+
+func (w *WishketService) SaveProject(project *domain.ProjectInfo) {
+	w.db.Create(project)
+}
+
+func (w *WishketService) GetLastProject() domain.ProjectInfo {
+	var project domain.ProjectInfo
+	w.db.Last(&project)
+	return project
+}
+
+func (w *WishketService) FindProjectByUrl(url string) []domain.ProjectInfo {
+	var projects []domain.ProjectInfo
+	w.db.Where("url = ?", url).Find(&projects)
+	return projects
+}
