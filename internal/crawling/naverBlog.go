@@ -136,7 +136,7 @@ func FetchBlogPosts(blogId, categoryNo string, currentPage int) ([]*domain.Naver
 			ArticleID:   post.LogNo,
 			ArticleLink: baseURL + post.LogNo,
 			Title:       post.Title,
-			Content:     blogId + "- " + categoryNo,
+			Content:     blogId + "- " + getContentKeyValues(blogId, categoryNo),
 			PostDate:    post.AddDate,
 			NaverPlaces: strings.Join(placesUrls, ","),
 		},
