@@ -87,10 +87,11 @@ func extractArticles(ctx context.Context) ([]*domain.GuestArticle, error) {
 		articles = append(articles, &domain.GuestArticle{
 			TxtDetail:    txtDetail,
 			Username:     username,
-			CreatedAt:    createdAt,
+			WrittenAt:    createdAt,
 			ViewCount:    viewCnt,
 			CommentCount: commentCnt,
 			URL:          articleURL,
+			CreatedAt:    time.Now(),
 		})
 	}
 

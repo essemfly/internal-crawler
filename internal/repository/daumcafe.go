@@ -24,6 +24,17 @@ func (s *DaumCafeService) CreateArticle(article *domain.GuestArticle) error {
 	return result.Error
 }
 
+func (s *DaumCafeService) CreateArticles(articles []*domain.GuestArticle) []domain.GuestArticle {
+	var newArticles []domain.GuestArticle
+	for _, article := range articles {
+		result := s.db.Create(article)
+		if result.Error == nil {
+			newArticles = append(newArticles, *article)
+		}
+	}
+	return newArticles
+}
+
 // GetArticleByID retrieves a GuestArticle from the database by ID
 func (s *DaumCafeService) GetArticleByID(id uint) (*domain.GuestArticle, error) {
 	var article domain.GuestArticle
@@ -42,4 +53,10 @@ func (s *DaumCafeService) GetAllArticles() ([]domain.GuestArticle, error) {
 func (s *DaumCafeService) UpdateArticle(article *domain.GuestArticle) error {
 	result := s.db.Save(article)
 	return result.Error
+}
+
+func (s *DaumCafeService) GetLastArticle(cafeName string) *domain.GuestArticle {
+	var article domain.GuestArticle
+	s.db.Where("cafe_name = ?", cafeName).Order("id desc").First(&article)
+	return &article
 }

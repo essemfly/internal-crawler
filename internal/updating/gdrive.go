@@ -262,7 +262,7 @@ func GetLastGuestArticle(service *sheets.Service, channel *domain.CrawlingSource
 	article := &domain.GuestArticle{
 		TxtDetail:    lastRecord[0].(string),
 		Username:     lastRecord[1].(string),
-		CreatedAt:    lastRecord[2].(string),
+		WrittenAt:    lastRecord[2].(string),
 		ViewCount:    lastRecord[3].(int),
 		CommentCount: lastRecord[4].(int),
 		URL:          lastRecord[5].(string),
@@ -280,7 +280,7 @@ func UpdateGuestArticleCheckpoint(service *sheets.Service, channel *domain.Crawl
 
 	newData := [][]interface{}{}
 	for _, article := range articles {
-		writtenAt := pkg.ParseRelativeTime(article.CreatedAt)
+		writtenAt := pkg.ParseRelativeTime(article.WrittenAt)
 		row := []interface{}{
 			article.TxtDetail,
 			article.Username,
