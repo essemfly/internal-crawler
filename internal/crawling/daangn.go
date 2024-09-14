@@ -21,7 +21,6 @@ func CrawlDanggnIndex(channel *domain.CrawlingSource, keywords []*domain.DaangnK
 	log.Println("start crawling danggn index", zap.Int("startIndex", startIndex), zap.Int("lastIndex", lastIndex))
 	pds := []*domain.DaangnProduct{}
 	for i := startIndex; i <= lastIndex; i++ {
-		log.Println("index", i)
 		newProduct, err := CrawlPage(i)
 		if err != nil {
 			if err.Error() == "Not Found" {
