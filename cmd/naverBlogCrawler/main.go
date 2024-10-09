@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/essemfly/internal-crawler/internal/crawling"
 	"github.com/essemfly/internal-crawler/internal/domain"
@@ -31,8 +32,8 @@ func main() {
 		categories := strings.Split(channel.Constraint, ",")
 		latestDate, err := naverBlogSrvc.GetLatestArticleDate(channel.SourceName)
 		if err != nil {
-			log.Println("Err", err)
-			panic(err)
+			log.Println("Error getting latest article date:", err)
+			latestDate = time.Date(2008, time.January, 1, 0, 0, 0, 0, time.UTC)
 		}
 
 		for _, categoryNo := range categories {

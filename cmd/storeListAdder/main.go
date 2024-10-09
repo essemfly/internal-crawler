@@ -5,11 +5,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
 	"github.com/essemfly/internal-crawler/internal/registering"
+	"github.com/essemfly/internal-crawler/internal/repository"
 	"github.com/essemfly/internal-crawler/internal/seed"
-	"github.com/essemfly/internal-crawler/internal/updating"
 	"github.com/essemfly/internal-crawler/pkg"
 	"github.com/joho/godotenv"
 )
@@ -25,17 +24,17 @@ func main() {
 	ctx, cancel := pkg.OpenChrome()
 	registering.NaverLogin(ctx)
 
-	sources := seed.ListSources(domain.Youtube)
-	sheetsService, err := pkg.CreateSheetsService(config.JsonKeyFilePath)
-	if err != nil {
-		log.Fatalf("Error creating Sheets service: %v", err)
-	}
+	naverBlogSrvc := repository.NewNaverBlogService()
+
+	sources := seed.ListSources(domain.NaverBlog)
 	for _, channel := range sources {
-		videos, err := updating.ListUnProcessedVideos(sheetsService, channel)
+		articles, err := naverBlogSrvc.ListUnprocessedArticles()
 		if err != nil {
-			log.Fatalf("Error fetching unprocessed videos: %v", err)
+			fmt.Println("Error in listing", err)
 		}
-		registering.AddStoreToList(ctx, channel, videos)
+
+		// registering.AddStoreToList(ctx, channel, articles)
+		registering.AddBlogStoreToList(ctx, naverBlogSrvc, channel, articles)
 	}
 
 	defer cancel()
