@@ -52,3 +52,12 @@ func (ns *NaverBlogService) ListByNaverPlaces(place string) ([]*domain.NaverBlog
 	result := ns.db.Where("naver_places = ?", place).Order("created_at asc").Find(&articles) // 쿼리 실행 및 결과 저장
 	return articles, result.Error                                                            // 결과와 에러 반환
 }
+
+func (ns *NaverBlogService) ListAllPlaces() ([]string, error) {
+	var places []string
+	result := ns.db.Model(&domain.NaverBlogArticle{}).
+		Where("channel = ?", "mardukas"). // Add the WHERE clause for channel
+		Distinct("naver_places").
+		Pluck("naver_places", &places)
+	return places, result.Error
+}

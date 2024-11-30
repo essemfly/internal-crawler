@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/essemfly/internal-crawler/internal/domain"
 	"github.com/essemfly/internal-crawler/internal/registering"
@@ -28,13 +29,32 @@ func main() {
 
 	sources := seed.ListSources(domain.NaverBlog)
 	for _, channel := range sources {
-		articles, err := naverBlogSrvc.ListUnprocessedArticles()
-		if err != nil {
-			fmt.Println("Error in listing", err)
+		// articles, err := naverBlogSrvc.ListUnprocessedArticles()
+		// if err != nil {
+		// 	fmt.Println("Error in listing", err)
+		// }
+
+		// log.Println("_)_)_)_)_)(_)(_)(_)(_ --ARTICLES LENGTH", len(articles))
+		// registering.AddStoreToList(ctx, channel, articles)
+		links, _ := naverBlogSrvc.ListAllPlaces()
+		var individualLinks []string
+		uniqueLinks := make(map[string]struct{}) // To track unique links
+
+		for _, link := range links {
+			// Split the link by comma and append to individualLinks
+			parts := strings.Split(link, ",")
+			for _, part := range parts {
+				uniqueLinks[part] = struct{}{} // Add to map to ensure uniqueness
+			}
 		}
 
-		// registering.AddStoreToList(ctx, channel, articles)
-		registering.AddBlogStoreToList(ctx, naverBlogSrvc, channel, articles)
+		// Convert map keys back to slice
+		for link := range uniqueLinks {
+			individualLinks = append(individualLinks, link)
+		}
+
+		log.Println("INDIVIDUAL LINKS LENGTH: ", len(individualLinks))
+		registering.AddBlogStoreToList(ctx, naverBlogSrvc, channel, individualLinks)
 	}
 
 	defer cancel()
