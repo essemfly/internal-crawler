@@ -1,80 +1,12 @@
 package seed
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"os"
 
-	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
 	"github.com/essemfly/internal-crawler/internal/repository"
-	"google.golang.org/api/option"
-	"google.golang.org/api/sheets/v4"
 )
-
-// Depreciated
-func getRegisteredSourcesFromSheet() []*domain.CrawlingSource {
-	spreadsheetID := os.Getenv("SPREADSHEET_ID")
-	sheetName := "channels"
-	readRange := sheetName + "!A2:H"
-
-	ctx := context.Background()
-	creds := option.WithCredentialsFile(config.JsonKeyFilePath) // Replace with your credentials file path
-	srv, err := sheets.NewService(ctx, creds)
-	if err != nil {
-		log.Fatalf("Unable to create Sheets service: %v", err)
-	}
-
-	resp, err := srv.Spreadsheets.Values.Get(spreadsheetID, readRange).Do()
-	if err != nil {
-		log.Fatalf("Unable to retrieve data from sheet: %v", err)
-	}
-
-	var sources []*domain.CrawlingSource
-	if len(resp.Values) == 0 {
-		fmt.Println("No data found.")
-	} else {
-		for _, row := range resp.Values {
-			typeInString := row[1].(string)
-			typeInStruct := domain.Youtube
-			switch typeInString {
-			case "wishket":
-				typeInStruct = domain.Wishket
-			case "daangn":
-				typeInStruct = domain.Daangn
-			case "daumcafe":
-				typeInStruct = domain.DaumCafe
-			case "naverblog":
-				typeInStruct = domain.NaverBlog
-			}
-
-			constraints := row[4].(string)
-
-			source := &domain.CrawlingSource{
-				SourceName:      row[0].(string),
-				SourceID:        row[3].(string),
-				SpreadSheetID:   spreadsheetID,
-				SpreadSheetName: row[5].(string),
-				Type:            typeInStruct,
-				NaverListID:     "",
-				NaverListName:   "",
-				WebhookURL:      row[2].(string),
-				Constraint:      constraints,
-			}
-
-			// Check if row[6] and row[7] exist and set them appropriately
-			if len(row) > 6 {
-				source.NaverListID = row[6].(string)
-			}
-			if len(row) > 7 {
-				source.NaverListName = row[7].(string)
-			}
-			sources = append(sources, source)
-		}
-	}
-	return sources
-}
 
 func CrawlingSeeds() {
 
@@ -150,6 +82,152 @@ func CrawlingSeeds() {
 		},
 	}
 
+	travelYoutubes := []domain.CrawlingSource{
+		{
+			Type:            domain.Youtube,
+			SourceName:      "빠니보틀",
+			SourceID:        "UCNhofiqfw5nl-NeDJkXtPvw",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "아무거나보틀",
+			SourceID:        "UCYbxBWWLTBZTWXjtMUjk_eA",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "곽튜브",
+			SourceID:        "UClRNDVO8093rmRTtLe4GEPw",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "뜨랑낄로",
+			SourceID:        "UCWqWR1sFAz9UsjwkFHEkBsw",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "여행가제이",
+			SourceID:        "UCxU8QX7IRRIW0VLuoWWoxbw",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "체코제",
+			SourceID:        "UCaoqDZPllYXLAH_5OBRLLrw",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "원지의하루",
+			SourceID:        "UC9gxOp_-R78phMHmv2bW_sg",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "천천히 세계여행 앤젤리나",
+			SourceID:        "UCGwUygnNcB1kcbmWl_jfzlQ",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "캡틴따거",
+			SourceID:        "UCt_7uH4Igz0T_K3Qzbs1Wig",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "노마드션",
+			SourceID:        "UCfCOEG2kjX_x4KAdWX-YUcA",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "모칠레로",
+			SourceID:        "UCUcy82tGagXlj4t1p2todeQ",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "버드모이",
+			SourceID:        "UCOoM7iaJkVWAmITWHKTPhnQ",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+		{
+			Type:            domain.Youtube,
+			SourceName:      "잰잰바리",
+			SourceID:        "UCSxhYq6K0mxF24SmMGeNNQA",
+			SpreadSheetID:   "",
+			SpreadSheetName: "",
+			NaverListID:     "",
+			NaverListName:   "",
+			WebhookURL:      os.Getenv("TRAVELER_WEBHOOK"),
+			Constraint:      "",
+		},
+	}
+
 	daangn := domain.CrawlingSource{
 		Type:            domain.Daangn,
 		SourceName:      "당근마켓",
@@ -176,6 +254,9 @@ func CrawlingSeeds() {
 	crwlSrvc.CreateCrawlingSource(&daangn)
 	for _, blogSource := range blogSources {
 		crwlSrvc.CreateCrawlingSource(&blogSource)
+	}
+	for _, travelYoutube := range travelYoutubes {
+		crwlSrvc.CreateCrawlingSource(&travelYoutube)
 	}
 
 	daangnSrvc := repository.NewDaangnService()
