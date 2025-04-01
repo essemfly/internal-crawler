@@ -14,6 +14,7 @@ const (
 type CrawlingSource struct {
 	ID              uint `gorm:"primaryKey"` // ID is the primary key
 	Type            CrawlingSourceType
+	IsActive        bool `gorm:"default:true"`
 	SourceName      string
 	SourceID        string // Channel ID for Youtube, Blog ID for NaverBlog, User ID for Instagram, Cafe ID for DaumCafe
 	SpreadSheetID   string // Sheet ID not to be used in DB

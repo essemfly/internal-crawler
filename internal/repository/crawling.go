@@ -34,7 +34,7 @@ func (cs *CrawlingService) GetCrawlingSourceByID(id uint) (*domain.CrawlingSourc
 // GetAllCrawlingSources retrieves all CrawlingSource records from the database
 func (cs *CrawlingService) ListAllCrawlingSources() ([]*domain.CrawlingSource, error) {
 	var sources []*domain.CrawlingSource
-	result := cs.db.Find(&sources) // pass a pointer to the slice
+	result := cs.db.Where("is_active = ?", true).Find(&sources) // pass a pointer to the slice
 	return sources, result.Error
 }
 

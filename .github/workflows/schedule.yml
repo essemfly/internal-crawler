@@ -38,11 +38,11 @@ jobs:
     - name: Run
       run: ./crawler
 
-    - name: Build
-      run:  go build -o guest cmd/daumCafeCrawler/main.go
+    # - name: Build
+    #   run:  go build -o guest cmd/daumCafeCrawler/main.go
 
-    - name: Run
-      run: ./guest
+    # - name: Run
+    #   run: ./guest
 
     - name: Build
       run:  go build -o blog cmd/naverBlogCrawler/main.go
