@@ -23,3 +23,5 @@ go.work
 wishket
 
 .env
+
+*.DS_Store
