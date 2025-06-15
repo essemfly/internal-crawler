@@ -9,6 +9,7 @@ const (
 	DaumCafe  CrawlingSourceType = "DaumCafe"
 	Wishket   CrawlingSourceType = "Wishket"
 	Daangn    CrawlingSourceType = "Daangn"
+	Public    CrawlingSourceType = "Public"
 )
 
 type CrawlingSource struct {

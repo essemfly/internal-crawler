@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/essemfly/internal-crawler/config"
 	"github.com/essemfly/internal-crawler/internal/domain"
 	"gorm.io/gorm"
@@ -20,6 +22,13 @@ func NewCrawlingService() *CrawlingService {
 
 // CreateCrawlingSource adds a new CrawlingSource to the database
 func (cs *CrawlingService) CreateCrawlingSource(source *domain.CrawlingSource) error {
+	if source.SourceName == "" {
+		return errors.New("source name is required")
+	}
+	var existingSource domain.CrawlingSource
+	if cs.db.Where("source_name = ?", source.SourceName).First(&existingSource).RowsAffected > 0 {
+		return errors.New("source name already exists")
+	}
 	result := cs.db.Create(source)
 	return result.Error
 }

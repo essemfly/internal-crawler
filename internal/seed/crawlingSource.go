@@ -45,6 +45,22 @@ func CrawlingSeeds() {
 		Constraint:      "먹을텐데",
 	}
 
+	meatKing := domain.CrawlingSource{
+		Type:          domain.Youtube,
+		SourceName:    "정육왕",
+		SourceID:      "UC1oXmhvYHVI2bApphh3IzuQ",
+		NaverListName: "정육왕 모음",
+		WebhookURL:    os.Getenv("YOUTUBE_WEBHOOK"),
+	}
+
+	blueRibbon := domain.CrawlingSource{
+		Type:          domain.Public,
+		SourceName:    "블루리본",
+		SourceID:      "UC1oXmhvYHVI2bApphh3IzuQ",
+		NaverListName: "블루리본 모음",
+		WebhookURL:    os.Getenv("YOUTUBE_WEBHOOK"),
+	}
+
 	wishket := domain.CrawlingSource{
 		Type:            domain.Wishket,
 		SourceName:      "위시켓",
@@ -249,6 +265,8 @@ func CrawlingSeeds() {
 	crwlSrvc.CreateCrawlingSource(&kimSawon)
 	crwlSrvc.CreateCrawlingSource(&bakMarket)
 	crwlSrvc.CreateCrawlingSource(&sikyung)
+	crwlSrvc.CreateCrawlingSource(&meatKing)
+	crwlSrvc.CreateCrawlingSource(&blueRibbon)
 	crwlSrvc.CreateCrawlingSource(&wishket)
 	crwlSrvc.CreateCrawlingSource(&basketGuest)
 	crwlSrvc.CreateCrawlingSource(&daangn)
